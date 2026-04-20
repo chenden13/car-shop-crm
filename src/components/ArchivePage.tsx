@@ -69,18 +69,20 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
   const completedCustomers = customers.filter(c => c.status === 'completed');
   const filteredCustomers = completedCustomers
-    .filter(c =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone.includes(searchTerm) ||
-      c.plateNumber.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(c => {
+      const name = String(c.name || '').toLowerCase();
+      const phone = String(c.phone || '');
+      const plate = String(c.plateNumber || '').toLowerCase();
+      const term = searchTerm.toLowerCase();
+      return name.includes(term) || phone.includes(term) || plate.includes(term);
+    })
     .sort((a, b) => {
       let cmp = 0;
       if (sortBy === 'id') {
-        cmp = a.id.localeCompare(b.id, undefined, { numeric: true });
+        cmp = String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true });
       } else {
-        const da = a.deliveryDate || '';
-        const db = b.deliveryDate || '';
+        const da = String(a.deliveryDate || '');
+        const db = String(b.deliveryDate || '');
         cmp = da.localeCompare(db);
       }
       return sortOrder === 'asc' ? cmp : -cmp;
