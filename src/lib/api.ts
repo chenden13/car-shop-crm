@@ -34,10 +34,12 @@ export const api = {
       brand,
       model,
       status,
-      data: rest,
-      updated_at: new Date().toISOString()
+      data: rest
     });
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase DB Error Details:', error);
+      throw error;
+    }
   },
 
   // --- 庫存 ---
