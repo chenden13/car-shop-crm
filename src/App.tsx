@@ -162,14 +162,32 @@ function App() {
   };
 
 
-  const handleImport = (newCustomers: Customer[]) => {
-    setCustomers(prev => {
-      const existingIds = new Set(prev.map(c => c.id));
-      const filtered = newCustomers.filter(c => !existingIds.has(c.id));
-      return [...prev, ...filtered];
-    });
+  const handleImport = async (newCustomers: Customer[]) => {
     setIsImportModalOpen(false);
-    alert(`成功匯入 ${newCustomers.length} 筆資料！`);
+    
+    // 過濾出尚未存在於本地狀態的資料
+    const existingIds = new Set(customers.map(c => c.id));
+    const filtered = newCustomers.filter(c => !existingIds.has(c.id));
+
+    if (filtered.length === 0) {
+      alert('沒有提取到任何新資料，或者編號皆已存在。');
+      return;
+    }
+
+    try {
+      // 依序寫入至雲端資料庫 (使用 for...of 避免短時間發出上百個請求導致被阻擋)
+      for (const c of filtered) {
+        await api.upsertCustomer(c);
+      }
+      
+      // 雲端確認寫入成功後，一併更新前端畫面
+      setCustomers(prev => [...prev, ...filtered]);
+      alert(`✅ 成功匯入並同步 ${filtered.length} 筆資料至雲端資料庫！`);
+
+    } catch (err) {
+      console.error('雲端同步失敗:', err);
+      alert('上傳雲端失敗，請檢查網路連線。您可能需要重新整理網頁再試一次。');
+    }
   };
 
   const handleUpdateInventory = async (item: FilmInventory) => {
