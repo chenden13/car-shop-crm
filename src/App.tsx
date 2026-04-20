@@ -41,18 +41,23 @@ function App() {
   // --- 雲端初始化 ---
   useEffect(() => {
     const initCloud = async () => {
+      // 增加超時保護：如果 5 秒內連不上雲端，強行進入離線模式
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('連線超時')), 5000));
+      
       try {
-        const [cloudCustomers, cloudInventory, cloudLogs] = await Promise.all([
+        const fetchTask = Promise.all([
           api.getCustomers(),
           api.getInventory(),
           api.getInventoryLogs()
         ]);
         
+        const [cloudCustomers, cloudInventory, cloudLogs] = await Promise.race([fetchTask, timeout]) as any;
+        
         setCustomers(cloudCustomers.length > 0 ? cloudCustomers : initialCustomers);
         setInventory(cloudInventory.length > 0 ? cloudInventory : initialInventory);
         setInventoryLogs(cloudLogs);
       } catch (err) {
-        console.error('連線伺服器失敗，切換為離線模式:', err);
+        console.error('雲端連線失敗或超時，已切換為離線模式:', err);
         setCustomers(initialCustomers);
         setInventory(initialInventory);
       } finally {
@@ -64,6 +69,7 @@ function App() {
       initCloud();
     }
   }, [currentUser]);
+
 
 
 
