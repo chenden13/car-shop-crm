@@ -46,7 +46,7 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
         const isChecked = (val: any) => String(val || '').trim().toUpperCase() === 'O';
 
         return {
-          id: String(row['編號'] || `IMP-${Date.now()}-${index}`),
+          id: row['編號'] ? String(row['編號']) : '無編號',
           name: String(row['車主姓名'] || ''),
           phone: String(row['電話'] || ''),
           plateNumber: String(row['車牌'] || ''),

@@ -81,8 +81,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       if (sortBy === 'id') {
         cmp = String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true });
       } else {
-        const da = String(a.deliveryDate || '');
-        const db = String(b.deliveryDate || '');
+        const da = String(a.expectedStartDate || '');
+        const db = String(b.expectedStartDate || '');
         cmp = da.localeCompare(db);
       }
       return sortOrder === 'asc' ? cmp : -cmp;
@@ -203,8 +203,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
                 {/* Date */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.78rem' }}><Calendar size={12} /> 交車日期</div>
-                  <div style={{ fontWeight: '600', fontSize: '0.88rem' }}>{customer.deliveryDate || '不詳'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.78rem' }}><Calendar size={12} /> 施工日期</div>
+                  <div style={{ fontWeight: '600', fontSize: '0.88rem' }}>{customer.expectedStartDate || '未排定'}</div>
                 </div>
 
                 {/* Expand button */}
