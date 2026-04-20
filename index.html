@@ -4,7 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CarShop CRM PRO</title>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.width = '100%';
+        div.style.background = 'red';
+        div.style.color = 'white';
+        div.style.padding = '20px';
+        div.style.zIndex = '99999';
+        div.style.fontSize = '14px';
+        div.style.whiteSpace = 'pre-wrap';
+        div.innerHTML = '<b>偵測到系統崩潰：</b><br>' + msg + '<br>檔案: ' + url + '<br>行號: ' + line;
+        document.body.appendChild(div);
+      };
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
