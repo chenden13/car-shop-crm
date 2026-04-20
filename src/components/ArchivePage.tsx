@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import type { Customer, Role } from '../types';
 
-import {
   Search, Car, User, Phone, Calendar, ShieldCheck,
   ChevronDown, ChevronUp, Gift, Package, CheckCircle2,
-  XCircle, FileText, Glasses, AlertCircle, Hash, Heart, Star, DollarSign
+  XCircle, FileText, Glasses, AlertCircle, Hash, Heart, Star, DollarSign,
+  ArrowUp, ArrowDown
 } from 'lucide-react';
+
 
 interface ArchivePageProps {
   customers: Customer[];
@@ -62,14 +63,28 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
+  const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const completedCustomers = customers.filter(c => c.status === 'completed');
-  const filteredCustomers = completedCustomers.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phone.includes(searchTerm) ||
-    c.plateNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = completedCustomers
+    .filter(c =>
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.phone.includes(searchTerm) ||
+      c.plateNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'id') {
+        cmp = a.id.localeCompare(b.id, undefined, { numeric: true });
+      } else {
+        const da = a.deliveryDate || '';
+        const db = b.deliveryDate || '';
+        cmp = da.localeCompare(db);
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+
 
   const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
@@ -91,17 +106,44 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
           <h1 style={{ margin: 0, fontSize: '2rem' }}>完工案件存檔庫</h1>
           <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>查詢與管理所有已結案的服務紀錄・共 {completedCustomers.length} 筆</p>
         </div>
-        <div style={{ position: 'relative', width: '350px' }}>
-          <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
-          <input
-            type="text"
-            placeholder="搜尋姓名、電話或車牌號碼..."
-            className="form-control"
-            style={{ paddingLeft: '40px', borderRadius: '30px', border: '1px solid #e2e8f0' }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ position: 'relative', width: '300px' }}>
+            <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
+            <input
+              type="text"
+              placeholder="搜尋姓名、電話或車牌..."
+              className="form-control"
+              style={{ paddingLeft: '40px', borderRadius: '30px', border: '1px solid #e2e8f0', width: '100%' }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              className={`btn ${sortBy === 'id' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => {
+                if (sortBy === 'id') setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                else { setSortBy('id'); setSortOrder('desc'); }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '8px 12px' }}
+            >
+              <Hash size={15} /> 編號 {sortBy === 'id' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+            </button>
+            
+            <button 
+              className={`btn ${sortBy === 'date' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => {
+                if (sortBy === 'date') setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                else { setSortBy('date'); setSortOrder('desc'); }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '8px 12px' }}
+            >
+              <Calendar size={15} /> 日期 {sortBy === 'date' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+            </button>
+          </div>
         </div>
+
       </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -117,9 +159,21 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
               >
                 {/* ID + Car */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ background: '#64748b', color: '#fff', padding: '3px 7px', borderRadius: '5px', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0 }}>
+                  <div style={{ 
+                    background: '#64748b', 
+                    color: '#fff', 
+                    padding: '3px 8px', 
+                    borderRadius: '5px', 
+                    fontSize: '0.75rem', 
+                    fontWeight: 'bold', 
+                    flexShrink: 0,
+                    minWidth: '50px',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap'
+                  }}>
                     {customer.id}
                   </div>
+
                   <div style={{ background: 'var(--primary)', color: '#fff', padding: '7px', borderRadius: '8px', flexShrink: 0 }}><Car size={18} /></div>
                   <div>
                     <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{customer.plateNumber}</div>
