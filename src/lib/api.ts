@@ -4,16 +4,8 @@ import type { Customer, FilmInventory, InventoryLog } from '../types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// 防禦性檢查：如果不具備正確的 Supabase JWT 格式，則不初始化以防止崩潰
-const isKeyValid = supabaseUrl && supabaseKey && supabaseKey.startsWith('eyJ') && supabaseUrl !== '您的_SUPABASE_網址';
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-if (!isKeyValid) {
-  console.error('CRITICAL: Supabase Key 格式不正確或遺失！請檢查 .env 檔案中的 VITE_SUPABASE_ANON_KEY (應以 eyJ 開頭)');
-}
-
-export const supabase = isKeyValid 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
 
 export const api = {
   // --- 客戶資料 ---
