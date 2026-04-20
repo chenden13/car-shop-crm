@@ -27,7 +27,60 @@ export const CustomerDetail: React.FC<{ customer: Customer }> = ({ customer }) =
         </ul>
       </div>
 
+      <div style={{ background: '#f0f9ff', padding: '16px', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+        <h4 style={{ marginTop: 0, color: '#0369a1' }}>施工項目清單</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '12px' }}>
+          {customer.mainService && (
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>主施工項目</div>
+              <div style={{ fontWeight: '600' }}>{customer.mainService} ({customer.mainServiceBrand || '無'})</div>
+            </div>
+          )}
+          {customer.windowTint && (
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>隔熱紙</div>
+              <div style={{ fontWeight: '600' }}>{customer.windowTint} ({customer.windowTintBrand || '無'})</div>
+            </div>
+          )}
+          {customer.digitalMirror && (
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>電子後視鏡</div>
+              <div style={{ fontWeight: '600' }}>{customer.digitalMirror} ({customer.digitalMirrorBrand || '無'})</div>
+            </div>
+          )}
+          {customer.electricMod && (
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>電動改裝</div>
+              <div style={{ fontWeight: '600' }}>{customer.electricMod} ({customer.electricModBrand || '無'})</div>
+            </div>
+          )}
+        </div>
+
+        {customer.customAccessories && customer.customAccessories.length > 0 && (
+          <div style={{ marginTop: '12px', borderTop: '1px dashed #bae6fd', paddingTop: '8px' }}>
+            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>客製化配件</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+              {customer.customAccessories.map(acc => (
+                <span key={acc.id} style={{ background: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #e0f2fe', fontSize: '0.85rem' }}>{acc.name}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {customer.giftItems && customer.giftItems.length > 0 && (
+          <div style={{ marginTop: '12px', borderTop: '1px dashed #bae6fd', paddingTop: '8px' }}>
+            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>贈送項目</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+              {customer.giftItems.map(gift => (
+                <span key={gift} style={{ background: '#fef2f2', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fee2e2', fontSize: '0.85rem', color: '#b91c1c' }}>{gift}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+
         <h4 style={{ marginTop: 0, color: 'var(--text-primary)' }}>外觀與社經特徵</h4>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: 'var(--text-secondary)' }}>
           <li>所在地: {customer.location || '未填寫'}</li>
@@ -38,6 +91,38 @@ export const CustomerDetail: React.FC<{ customer: Customer }> = ({ customer }) =
         </ul>
       </div>
 
+      {(customer.damagePhotos?.length || 0) > 0 && (
+        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #fef3c7' }}>
+          <h4 style={{ marginTop: 0, color: '#b45309' }}>車體受損紀錄</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px' }}>
+            {customer.damagePhotos?.map((photo, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img src={photo.url} alt="damage" style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '0.65rem', padding: '2px', textAlign: 'center', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                  {photo.category}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(customer.progressPhotos?.length || 0) > 0 && (
+        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #dbeafe' }}>
+          <h4 style={{ marginTop: 0, color: '#1d4ed8' }}>施工/完工美照</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px' }}>
+            {customer.progressPhotos?.map((photo, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img src={photo.url} alt="progress" style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '0.65rem', padding: '2px', textAlign: 'center', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                  {photo.category}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {customer.notes && (
         <div>
           <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>其他備註</h4>
@@ -45,5 +130,6 @@ export const CustomerDetail: React.FC<{ customer: Customer }> = ({ customer }) =
         </div>
       )}
     </div>
+
   );
 };

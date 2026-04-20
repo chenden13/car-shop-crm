@@ -1,4 +1,13 @@
-export type StatusType = 'new' | 'deposit' | 'construction' | 'completed';
+export type Role = 'admin' | 'employee';
+
+export interface User {
+  username: string;
+  role: Role;
+  name: string;
+}
+
+export type StatusType = 'new' | 'deposit' | 'scheduled' | 'construction' | 'completed';
+
 
 export interface Customer {
   id: string;
@@ -52,11 +61,24 @@ export interface Customer {
   electricModBrand?: string;
   
   customAccessories?: Accessory[];
+  giftItems?: string[];
+
+  // 財務資訊
+  materialCode?: string;       // 膜料貨號
+  filmColor?: string;          // 細項/膜料顏色
+  totalAmount?: number;        // 金額
+  cost?: number;               // 成本
+  revenue?: number;            // 收益
+  quoteCreated?: boolean;      // 報價單是否建立
+  appliedDiscountName?: string; // 套用的折扣名稱
+  discountAmount?: number;     // 折扣金額
+
+
   
   // 施工中
   constructionChecklist?: ChecklistItem[];
-  damagePhotos?: string[]; // QNAP URL
-  progressPhotos?: string[]; // QNAP URL
+  damagePhotos?: CategorizedPhoto[]; 
+  progressPhotos?: CategorizedPhoto[]; 
   
   // 施工完成
   deliveryDate?: string;
@@ -74,6 +96,12 @@ export interface Customer {
   photosSent?: boolean;
 }
 
+export interface CategorizedPhoto {
+  category: string;
+  url: string;
+}
+
+
 export interface Accessory {
   id: string;
   name: string;
@@ -85,3 +113,30 @@ export interface ChecklistItem {
   name: string;
   checked: boolean;
 }
+
+export interface StorageLocation {
+  zone: 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+  section: number;
+  slot: number;
+}
+
+export interface FilmInventory {
+  id: string;
+  brand: string;
+  color: string;
+  size: string;
+  location: StorageLocation;
+  lastUpdated: string;
+  notes?: string;
+}
+
+export interface InventoryLog {
+  id: string;
+  itemId: string;
+  action: 'add' | 'update' | 'remove';
+  details: string;
+  timestamp: string;
+  operator: string;
+}
+
+

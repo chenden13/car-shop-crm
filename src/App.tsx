@@ -1,25 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-import { initialCustomers } from './data/mockData';
+import { initialCustomers, initialInventory } from './data/mockData';
+import { api } from './lib/api';
+
+
 import { CustomerCard } from './components/CustomerCard';
-import type { Customer, StatusType } from './types';
-import { Plus } from 'lucide-react';
+import type { Customer, StatusType, FilmInventory, User, InventoryLog } from './types';
+
+
+
 import { Modal } from './components/Modal';
 import { NewCustomerForm } from './components/NewCustomerForm';
 import { QuoteForm } from './components/QuoteForm';
 import { ConstructionForm } from './components/ConstructionForm';
 import { CompletedForm } from './components/CompletedForm';
 import { CustomerDetail } from './components/CustomerDetail';
+import { ArchivePage } from './components/ArchivePage';
+import { ConstructionMonitorPage } from './components/ConstructionMonitorPage';
+import { ScheduledForm } from './components/ScheduledForm';
+import { ExcelImport } from './components/ExcelImport';
+import { ArchiveEditForm } from './components/ArchiveEditForm';
+import { InventoryPage } from './components/InventoryPage';
+import { LoginPage } from './components/LoginPage';
+import { History, LayoutDashboard, Plus, FileUp, Box, LogOut, User as UserIcon } from 'lucide-react';
+
+
+
+
+
+
 
 function App() {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [inventory, setInventory] = useState<FilmInventory[]>([]);
+  const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
+  const [view, setView] = useState<'kanban' | 'archive' | 'monitor' | 'inventory'>('kanban');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- 雲端初始化 ---
+  useEffect(() => {
+    const initCloud = async () => {
+      try {
+        const [cloudCustomers, cloudInventory, cloudLogs] = await Promise.all([
+          api.getCustomers(),
+          api.getInventory(),
+          api.getInventoryLogs()
+        ]);
+        
+        setCustomers(cloudCustomers.length > 0 ? cloudCustomers : initialCustomers);
+        setInventory(cloudInventory.length > 0 ? cloudInventory : initialInventory);
+        setInventoryLogs(cloudLogs);
+      } catch (err) {
+        console.error('連線伺服器失敗，切換為離線模式:', err);
+        setCustomers(initialCustomers);
+        setInventory(initialInventory);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (currentUser) {
+      initCloud();
+    }
+  }, [currentUser]);
+
+
+
+
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isConstructionModalOpen, setIsConstructionModalOpen] = useState(false);
   const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
+  const [isScheduledModalOpen, setIsScheduledModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isArchiveEditModalOpen, setIsArchiveEditModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+
+
 
   const getCustomersByStatus = (status: StatusType) => {
     return customers.filter(c => c.status === status);
@@ -32,28 +95,43 @@ function App() {
       setIsPreviewModalOpen(true);
     } else if (customer.status === 'deposit') {
       setIsQuoteModalOpen(true);
+    } else if (customer.status === 'scheduled') {
+      setIsScheduledModalOpen(true);
     } else if (customer.status === 'construction') {
       setIsConstructionModalOpen(true);
     } else if (customer.status === 'completed') {
       setIsCompletedModalOpen(true);
     }
+
   };
 
   const generateCustomerId = () => {
     return `C-${String(customers.length + 1).padStart(3, '0')}`;
   };
 
-  const handleAddOrUpdateCustomer = (customerData: Partial<Customer>, moveToDeposit?: boolean) => {
+  const handleAddOrUpdateCustomer = async (customerData: Partial<Customer>, moveToDeposit?: boolean) => {
     const updatedStatus = moveToDeposit ? 'deposit' : 'new';
-    
+    let target: Customer;
+
     if (selectedCustomer) {
-      setCustomers(prev => prev.map(c => c.id === selectedCustomer.id ? { ...c, ...customerData, status: updatedStatus as StatusType } as Customer : c));
+      target = { ...selectedCustomer, ...customerData, status: updatedStatus as StatusType };
     } else {
-      const newCustomer = {
+      target = {
         ...customerData,
-        status: updatedStatus,
+        status: updatedStatus as StatusType,
       } as Customer;
-      setCustomers(prev => [...prev, newCustomer]);
+    }
+
+    try {
+      await api.upsertCustomer(target);
+      setCustomers(prev => {
+        const exists = prev.find(c => c.id === target.id);
+        if (exists) return prev.map(c => c.id === target.id ? target : c);
+        return [...prev, target];
+      });
+    } catch (err) {
+      console.error('儲存失敗:', err);
+      alert('資料同步失敗，請檢查網路連線');
     }
     
     setIsNewModalOpen(false);
@@ -62,20 +140,107 @@ function App() {
     setSelectedCustomer(null);
   };
 
-  const handleGenericUpdate = (updatedCustomer: Customer) => {
-    setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+  const handleGenericUpdate = async (updatedCustomer: Customer) => {
+    try {
+      await api.upsertCustomer(updatedCustomer);
+      setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+    } catch (err) {
+      console.error('更新失敗:', err);
+    }
     setIsQuoteModalOpen(false);
     setIsConstructionModalOpen(false);
     setIsCompletedModalOpen(false);
+    setIsScheduledModalOpen(false);
     setSelectedCustomer(null);
   };
 
+
+  const handleImport = (newCustomers: Customer[]) => {
+    setCustomers(prev => {
+      const existingIds = new Set(prev.map(c => c.id));
+      const filtered = newCustomers.filter(c => !existingIds.has(c.id));
+      return [...prev, ...filtered];
+    });
+    setIsImportModalOpen(false);
+    alert(`成功匯入 ${newCustomers.length} 筆資料！`);
+  };
+
+  const handleUpdateInventory = async (item: FilmInventory) => {
+    const log: InventoryLog = {
+      id: `LOG-${Date.now()}`,
+      itemId: item.id,
+      action: 'update',
+      details: `更新 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
+      timestamp: new Date().toLocaleString(),
+      operator: currentUser?.name || '未知'
+    };
+
+    try {
+      await Promise.all([
+        api.updateInventory(item),
+        api.addInventoryLog(log)
+      ]);
+      setInventory(prev => prev.map(i => i.id === item.id ? item : i));
+      setInventoryLogs(prev => [log, ...prev]);
+    } catch (err) {
+      console.error('同步庫存失敗:', err);
+    }
+  };
+
+  const handleAddInventory = async (item: FilmInventory) => {
+    const log: InventoryLog = {
+      id: `LOG-${Date.now()}`,
+      itemId: item.id,
+      action: 'add',
+      details: `新增 ${item.brand} ${item.color} 於 ${item.location.zone}${item.location.section}-${item.location.slot}`,
+      timestamp: new Date().toLocaleString(),
+      operator: currentUser?.name || '未知'
+    };
+
+    try {
+      await Promise.all([
+        api.updateInventory(item),
+        api.addInventoryLog(log)
+      ]);
+      setInventory(prev => [...prev, item]);
+      setInventoryLogs(prev => [log, ...prev]);
+    } catch (err) {
+      console.error('新增庫存失敗:', err);
+    }
+  };
+
+
+  const handleRemoveInventory = (id: string) => {
+    const item = inventory.find(i => i.id === id);
+    setInventory(prev => prev.filter(i => i.id !== id));
+    if (item) {
+      setInventoryLogs(prev => [{
+        id: `LOG-${Date.now()}`,
+        itemId: id,
+        action: 'remove',
+        details: `移除項目 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
+        timestamp: new Date().toLocaleString(),
+        operator: currentUser?.name || '未知'
+      }, ...prev]);
+    }
+  };
+
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setView('kanban');
+  };
+
   const columns: { id: StatusType; title: string }[] = [
+
     { id: 'new', title: '新增客人 (進件區)' },
     { id: 'deposit', title: '等待收訂 (施工報價)' },
+    { id: 'scheduled', title: '已下定・未施工' },
     { id: 'construction', title: '施工中 (進度檢核)' },
     { id: 'completed', title: '施工完成 (結案關懷)' },
   ];
+
+
 
   return (
     <div className="app-container">
@@ -84,34 +249,125 @@ function App() {
           <div style={{ width: '30px', height: '30px', background: 'var(--primary-color)', borderRadius: '8px' }}></div>
           <h1>CarShop CRM PRO</h1>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-primary" onClick={() => { setSelectedCustomer(null); setIsNewModalOpen(true); }}>
-            <Plus size={18} /> 新增客戶資料
-          </button>
+        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
+          {view === 'kanban' && (
+            <>
+              <button 
+                className="btn btn-outline" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', borderColor: '#f59e0b', color: '#b45309' }} 
+                onClick={() => setView('monitor')}
+              >
+                <LayoutDashboard size={18} /> 施工進度監控
+              </button>
+              <button 
+                className="btn btn-outline" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }} 
+                onClick={() => setView('inventory')}
+              >
+                <Box size={18} /> 膜料庫存
+              </button>
+              <button 
+                className="btn btn-outline" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }} 
+                onClick={() => setView('archive')}
+              >
+                <History size={18} /> 完工檔案庫
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => { setSelectedCustomer(null); setIsNewModalOpen(true); }}
+              >
+                <Plus size={18} /> 新增客戶資料
+              </button>
+            </>
+          )}
+
+          {view === 'archive' && currentUser.role === 'admin' && (
+            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#059669', borderColor: '#10b981' }} onClick={() => setIsImportModalOpen(true)}>
+              <FileUp size={18} /> Excel 匯入
+            </button>
+          )}
+
+          <div style={{ marginLeft: '12px', borderLeft: '1px solid #e2e8f0', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{currentUser.name}</div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{currentUser.role === 'admin' ? '系統管理員' : '店內員工'}</div>
+            </div>
+            <button className="btn" onClick={handleLogout} style={{ background: '#f1f5f9', color: '#475569', padding: '8px' }}>
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
+
+
+
+
       </header>
 
-      <div className="board-container">
-        {columns.map(column => (
-          <div key={column.id} className="kanban-column glass-panel">
-            <div className="column-header">
-              <div className="column-title">
-                {column.title}
-                <span className="card-count">{getCustomersByStatus(column.id).length}</span>
+      {view === 'kanban' ? (
+        <div className="board-container">
+          {columns.map(column => (
+            <div key={column.id} className="kanban-column glass-panel">
+              <div className="column-header">
+                <div className="column-title">
+                  {column.title}
+                  <span className="card-count">{getCustomersByStatus(column.id).length}</span>
+                </div>
+              </div>
+              <div className="column-body">
+                {getCustomersByStatus(column.id).map(customer => (
+                  <CustomerCard 
+                    key={customer.id} 
+                    customer={customer} 
+                    onClick={handleCardClick} 
+                  />
+                ))}
               </div>
             </div>
-            <div className="column-body">
-              {getCustomersByStatus(column.id).map(customer => (
-                <CustomerCard 
-                  key={customer.id} 
-                  customer={customer} 
-                  onClick={handleCardClick} 
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : view === 'archive' ? (
+        <ArchivePage 
+          customers={customers} 
+          onBack={() => setView('kanban')} 
+          onUpdate={(c) => setCustomers(prev => prev.map(x => x.id === c.id ? c : x))}
+          onEdit={(c) => {
+            setSelectedCustomer(c);
+            setIsArchiveEditModalOpen(true);
+          }}
+          onViewDetail={(c) => { 
+            setSelectedCustomer(c); 
+            setIsPreviewModalOpen(true); 
+          }} 
+          userRole={currentUser.role}
+        />
+
+      ) : view === 'inventory' ? (
+        <InventoryPage 
+          inventory={inventory}
+          inventoryLogs={inventoryLogs}
+          userRole={currentUser.role}
+          onAddInventory={handleAddInventory}
+          onUpdateInventory={handleUpdateInventory}
+          onRemoveInventory={handleRemoveInventory}
+          onBack={() => setView('kanban')}
+        />
+
+      ) : (
+
+        <ConstructionMonitorPage 
+          customers={customers} 
+          onBack={() => setView('kanban')}
+          onEdit={(c) => {
+            setSelectedCustomer(c);
+            setIsConstructionModalOpen(true);
+          }}
+        />
+
+
+      )}
+
+
 
       {/* Preview Modal */}
       <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title="客戶詳細資料摘要">
@@ -165,7 +421,47 @@ function App() {
           />
         )}
       </Modal>
+
+      <Modal isOpen={isScheduledModalOpen} onClose={() => setIsScheduledModalOpen(false)} title="已下定・排程確認">
+        {selectedCustomer && (
+          <ScheduledForm
+            customer={selectedCustomer}
+            onUpdate={(c) => {
+              setCustomers(prev => prev.map(x => x.id === c.id ? c : x));
+              setIsScheduledModalOpen(false);
+              setSelectedCustomer(null);
+            }}
+            onStartConstruction={handleGenericUpdate}
+            onCancel={() => setIsScheduledModalOpen(false)}
+          />
+        )}
+      </Modal>
+
+      <Modal isOpen={isArchiveEditModalOpen} onClose={() => setIsArchiveEditModalOpen(false)} title="微調完工存檔資料">
+        {selectedCustomer && (
+          <ArchiveEditForm 
+            customer={selectedCustomer} 
+            onSubmit={(c) => {
+              handleGenericUpdate(c);
+              setIsArchiveEditModalOpen(false);
+            }} 
+            onCancel={() => setIsArchiveEditModalOpen(false)} 
+            userRole={currentUser.role}
+          />
+
+        )}
+      </Modal>
+
+      <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="完工資料 Excel 匯入">
+
+        <ExcelImport 
+          onImport={handleImport} 
+          onCancel={() => setIsImportModalOpen(false)} 
+        />
+      </Modal>
+
     </div>
+
   );
 }
 
