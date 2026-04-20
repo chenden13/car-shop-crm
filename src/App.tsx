@@ -53,16 +53,17 @@ function App() {
         
         const [cloudCustomers, cloudInventory, cloudLogs] = await Promise.race([fetchTask, timeout]) as any;
         
-        setCustomers(cloudCustomers.length > 0 ? cloudCustomers : initialCustomers);
-        setInventory(cloudInventory.length > 0 ? cloudInventory : initialInventory);
-        setInventoryLogs(cloudLogs);
+        setCustomers(cloudCustomers || []);
+        setInventory(cloudInventory || []);
+        setInventoryLogs(cloudLogs || []);
       } catch (err) {
-        console.error('雲端連線失敗或超時，已切換為離線模式:', err);
-        setCustomers(initialCustomers);
-        setInventory(initialInventory);
+        console.error('雲端連線失敗，目前為空狀態:', err);
+        setCustomers([]);
+        setInventory([]);
       } finally {
         setIsLoading(false);
       }
+
     };
 
     if (currentUser) {
