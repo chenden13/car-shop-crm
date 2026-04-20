@@ -21,8 +21,9 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
     ], [
       'C-001', '王小明', '0912345678', 'ABC-1234', 'Tesla', 'Model 3', '全車改色膜', '3M', '磨砂陶瓷黑',
       '2024-05-01', '2024-05-02', '2024-05-05', '65000', '25000', 
-      '生日優惠', 'TM-332', '是', '是', '已發送', '已發送', '待追蹤', '已登錄', '範例備註'
+      '生日優惠', 'TM-332', 'O', 'O', 'O', 'O', 'O', 'O', '範例備註'
     ]];
+
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, '匯入範例');
     XLSX.writeFile(wb, 'CRM_匯入範本_全功能版.xlsx');
@@ -41,6 +42,9 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
       const data = XLSX.utils.sheet_to_json(ws);
 
       const importedCustomers: Customer[] = data.map((row: any, index) => {
+        // 輔助函式：判斷是否為 'O'
+        const isChecked = (val: any) => String(val || '').trim().toUpperCase() === 'O';
+
         return {
           id: row['編號'] || `IMP-${Date.now()}-${index}`,
           name: String(row['車主姓名'] || ''),
@@ -56,12 +60,12 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
           materialCode: row['貨號'],
           promotion: row['活動折扣'],
           
-          giftGiven: row['大禮包發送'] === '是' || row['大禮包發送'] === '已發送',
-          formSent: row['表單發送'] === '是' || row['表單發送'] === '已發送',
-          followUp2Weeks: row['兩週關懷'] === '是' || row['兩週關懷'] === '已完成',
-          inCalendar: row['登移行事曆'] === '是' || row['登移行事曆'] === '已登錄',
-          materialOrdered: row['是否已叫貨'] === '是' || row['是否已叫貨'] === true,
-          quoteCreated: row['是否已開報價單'] === '是' || row['是否已開報價單'] === true,
+          giftGiven: isChecked(row['大禮包發送']),
+          formSent: isChecked(row['表單發送']),
+          followUp2Weeks: isChecked(row['兩週關懷']),
+          inCalendar: isChecked(row['登移行事曆']),
+          materialOrdered: isChecked(row['是否已叫貨']),
+          quoteCreated: isChecked(row['是否已開報價單']),
           
           expectedStartDate: row['預計施工日期'],
           deliveryDate: row['交車日期'],
@@ -72,6 +76,7 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
           revenue: (Number(row['總金額']) || 0) - (Number(row['成本']) || 0),
         } as Customer;
       });
+
 
 
       onImport(importedCustomers);
