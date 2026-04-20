@@ -37,6 +37,7 @@ function App() {
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
   const [view, setView] = useState<'kanban' | 'archive' | 'monitor' | 'inventory'>('kanban');
   const [isLoading, setIsLoading] = useState(true);
+  const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
 
   // --- 雲端初始化 ---
   useEffect(() => {
@@ -175,18 +176,22 @@ function App() {
     }
 
     try {
+      setImportProgress({ current: 0, total: filtered.length });
       // 依序寫入至雲端資料庫 (使用 for...of 避免短時間發出上百個請求導致被阻擋)
-      for (const c of filtered) {
-        await api.upsertCustomer(c);
+      for (let i = 0; i < filtered.length; i++) {
+        await api.upsertCustomer(filtered[i]);
+        setImportProgress({ current: i + 1, total: filtered.length });
       }
       
       // 雲端確認寫入成功後，一併更新前端畫面
       setCustomers(prev => [...prev, ...filtered]);
+      setImportProgress(null);
       alert(`✅ 成功匯入並同步 ${filtered.length} 筆資料至雲端資料庫！`);
 
     } catch (err) {
       console.error('雲端同步失敗:', err);
       alert('上傳雲端失敗，請檢查網路連線。您可能需要重新整理網頁再試一次。');
+      setImportProgress(null);
     }
   };
 
@@ -280,6 +285,15 @@ function App() {
   return (
 
     <div className="app-container">
+      {importProgress && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h2 style={{ marginBottom: '20px', color: '#0f172a' }}>🚀 資料上傳雲端中，請勿關閉網頁...</h2>
+          <div style={{ width: '300px', height: '10px', background: '#e2e8f0', borderRadius: '5px', overflow: 'hidden', marginBottom: '10px' }}>
+            <div style={{ width: `${(importProgress.current / importProgress.total) * 100}%`, height: '100%', background: '#e11d48', transition: 'width 0.2s' }}></div>
+          </div>
+          <p style={{ color: '#64748b', fontWeight: 'bold' }}>{importProgress.current} / {importProgress.total} 筆已完成</p>
+        </div>
+      )}
       <header className="app-header glass-panel">
         <div className="brand">
           <div style={{ width: '30px', height: '30px', background: 'var(--primary-color)', borderRadius: '8px' }}></div>
