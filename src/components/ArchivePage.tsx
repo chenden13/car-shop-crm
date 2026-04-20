@@ -66,6 +66,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   const completedCustomers = customers.filter(c => c.status === 'completed');
   const filteredCustomers = completedCustomers
@@ -88,6 +90,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       return sortOrder === 'asc' ? cmp : -cmp;
     });
 
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
@@ -118,7 +122,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
               className="form-control"
               style={{ paddingLeft: '40px', borderRadius: '30px', border: '1px solid #e2e8f0', width: '100%' }}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             />
           </div>
 
@@ -128,6 +132,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
               onClick={() => {
                 if (sortBy === 'id') setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
                 else { setSortBy('id'); setSortOrder('desc'); }
+                setCurrentPage(1);
               }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '8px 12px' }}
             >
@@ -139,6 +144,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
               onClick={() => {
                 if (sortBy === 'date') setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
                 else { setSortBy('date'); setSortOrder('desc'); }
+                setCurrentPage(1);
               }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '8px 12px' }}
             >
@@ -150,7 +156,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {filteredCustomers.length > 0 ? filteredCustomers.map(customer => {
+        {paginatedCustomers.length > 0 ? paginatedCustomers.map(customer => {
           const isExpanded = expandedId === customer.id;
           return (
             <div key={customer.id} className="glass-panel" style={{ overflow: 'hidden', border: isExpanded ? '1px solid #bfdbfe' : '1px solid #e2e8f0', transition: 'border 0.2s' }}>
@@ -396,6 +402,28 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
           </div>
         )}
       </div>
+
+      {totalPages > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '32px' }}>
+          <button 
+            className="btn btn-outline" 
+            disabled={currentPage === 1}
+            onClick={() => { setCurrentPage(prev => Math.max(1, prev - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          >
+            上一頁
+          </button>
+          <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 'bold' }}>
+            第 {currentPage} 頁 / 共 {totalPages} 頁
+          </span>
+          <button 
+            className="btn btn-outline" 
+            disabled={currentPage === totalPages}
+            onClick={() => { setCurrentPage(prev => Math.min(totalPages, prev + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          >
+            下一頁
+          </button>
+        </div>
+      )}
     </div>
   );
 };
