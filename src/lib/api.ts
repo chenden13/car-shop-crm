@@ -6,126 +6,77 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-
 export const api = {
   // --- 客戶資料 ---
-  async getCustomers() {
-    if (!supabase) return []; // 沒設定就回傳空，觸發離線模式
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.warn('資料表可能尚未建立:', error.message);
-        return [];
-      }
-      
-      return (data || []).map(item => ({
-        ...(item.data || {}),
-        id: item.id,
-        name: item.name,
-        phone: item.phone,
-        plateNumber: item.plate_number,
-        brand: item.brand,
-        model: item.model,
-        status: item.status,
-        totalAmount: item.total_amount,
-        cost: item.cost,
-        revenue: item.revenue
-      })) as Customer[];
-    } catch (e) {
-      return [];
-    }
+  getCustomers: async () => {
+    const { data, error } = await supabase.from('customers').select('*');
+    if (error) throw error;
+    return (data || []).map(item => ({
+      ...(item.data || {}),
+      id: item.id,
+      name: item.name,
+      phone: item.phone,
+      plateNumber: item.plate_number,
+      brand: item.brand,
+      model: item.model,
+      status: item.status,
+      updatedAt: item.updated_at
+    }));
   },
 
-
-
-  async upsertCustomer(customer: Customer) {
-    if (!supabase) return customer;
-    // 提取核心欄位與其餘 JSONB 欄位
-    const { id, name, phone, plateNumber, brand, model, status, totalAmount, cost, revenue, ...rest } = customer;
-    
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .upsert({
-          id, name, phone, 
-          plate_number: plateNumber, 
-          brand, model, status, 
-          total_amount: totalAmount, 
-          cost, revenue,
-          data: rest // 剩餘資料存入 JSONB
-        })
-        .select();
-      if (error) throw error;
-      return data[0];
-    } catch (e) {
-      console.error('upsert 失敗:', e);
-      return customer;
-    }
+  upsertCustomer: async (customer: Customer) => {
+    const { id, name, phone, plateNumber, brand, model, status, ...rest } = customer;
+    const { error } = await supabase.from('customers').upsert({
+      id,
+      name,
+      phone,
+      plate_number: plateNumber,
+      brand,
+      model,
+      status,
+      data: rest,
+      updated_at: new Date().toISOString()
+    });
+    if (error) throw error;
   },
 
-  // --- 膜料庫存 ---
-  async getInventory() {
-    if (!supabase) return [];
-    try {
-      const { data, error } = await supabase
-        .from('inventory')
-        .select('*');
-      if (error) return [];
-      return data as FilmInventory[];
-    } catch (e) {
-      return [];
-    }
+  // --- 庫存 ---
+  getInventory: async () => {
+    const { data, error } = await supabase.from('inventory').select('*');
+    if (error) throw error;
+    return (data || []).map(item => ({
+      ...item,
+      location: item.location || { zone: 'A', section: '1', slot: '1' }
+    }));
   },
 
-  async updateInventory(item: FilmInventory) {
-    if (!supabase) return;
-    try {
-      await supabase.from('inventory').upsert(item);
-    } catch (e) {}
+  updateInventory: async (item: FilmInventory) => {
+    const { error } = await supabase.from('inventory').upsert(item);
+    if (error) throw error;
   },
 
-  // --- 異動紀錄 ---
-  async getInventoryLogs() {
-    if (!supabase) return [];
-    try {
-      const { data, error } = await supabase
-        .from('inventory_logs')
-        .select('*')
-        .order('timestamp', { ascending: false });
-      if (error) return [];
-      return data as InventoryLog[];
-    } catch (e) {
-      return [];
-    }
+  getInventoryLogs: async () => {
+    const { data, error } = await supabase.from('inventory_logs').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(item => item as InventoryLog);
   },
 
-  async addInventoryLog(log: InventoryLog) {
-    if (!supabase) return;
-    try {
-      await supabase.from('inventory_logs').insert(log);
-    } catch (e) {}
+  addInventoryLog: async (log: InventoryLog) => {
+    const { error } = await supabase.from('inventory_logs').insert({
+      id: log.id,
+      item_id: log.itemId,
+      action: log.action,
+      details: log.details,
+      operator: log.operator,
+      created_at: new Date().toISOString()
+    });
+    if (error) throw error;
   },
 
-  // --- 圖片上傳 (雲端儲存) ---
-  async uploadPhoto(file: File, path: string) {
-    if (!supabase) return URL.createObjectURL(file);
-    try {
-      const { data, error } = await supabase.storage
-        .from('photos')
-        .upload(path, file);
-      if (error) throw error;
-
-      const { data: publicUrl } = supabase.storage
-        .from('photos')
-        .getPublicUrl(data.path);
-      
-      return publicUrl.publicUrl;
-    } catch (e) {
-      return URL.createObjectURL(file);
-    }
+  uploadPhoto: async (file: File, path: string) => {
+    const { data, error } = await supabase.storage.from('photos').upload(path, file);
+    if (error) throw error;
+    const { data: publicUrl } = supabase.storage.from('photos').getPublicUrl(data.path);
+    return publicUrl.publicUrl;
   }
 };
