@@ -79,15 +79,21 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       return name.includes(term) || phone.includes(term) || plate.includes(term);
     })
     .sort((a, b) => {
-      let cmp = 0;
       if (sortBy === 'id') {
-        cmp = String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true });
+        const idA = String(a.id || '');
+        const idB = String(b.id || '');
+        
+        if (idA === '無編號' && idB !== '無編號') return 1;
+        if (idB === '無編號' && idA !== '無編號') return -1;
+        
+        const cmp = idA.localeCompare(idB, undefined, { numeric: true });
+        return sortOrder === 'asc' ? cmp : -cmp;
       } else {
         const da = String(a.expectedStartDate || '');
         const db = String(b.expectedStartDate || '');
-        cmp = da.localeCompare(db);
+        const cmp = da.localeCompare(db);
+        return sortOrder === 'asc' ? cmp : -cmp;
       }
-      return sortOrder === 'asc' ? cmp : -cmp;
     });
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
