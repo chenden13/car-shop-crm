@@ -45,6 +45,16 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
         // 輔助函式：判斷是否為 'O'
         const isChecked = (val: any) => String(val || '').trim().toUpperCase() === 'O';
 
+        // 輔助函式：處理 Excel 五位數日期
+        const parseDate = (val: any) => {
+          if (!val) return '';
+          if (typeof val === 'number') {
+            const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+            return date.toISOString().split('T')[0];
+          }
+          return String(val).replace(/\//g, '-').trim();
+        };
+
         return {
           id: row['編號'] ? String(row['編號']) : '無編號',
           name: String(row['車主姓名'] || ''),
@@ -67,8 +77,8 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
           materialOrdered: isChecked(row['是否已叫貨']),
           quoteCreated: isChecked(row['是否已開報價單']),
           
-          expectedStartDate: row['預計施工日期'],
-          deliveryDate: row['交車日期'],
+          expectedStartDate: parseDate(row['預計施工日期']),
+          deliveryDate: parseDate(row['交車日期']),
           notes: row['備註'],
           
           totalAmount: Number(row['總金額']) || 0,
