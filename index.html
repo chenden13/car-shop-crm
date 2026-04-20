@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CarShop CRM PRO</title>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.width = '100%';
+        div.style.background = 'red';
+        div.style.color = 'white';
+        div.style.padding = '20px';
+        div.style.zIndex = '99999';
+        div.style.fontSize = '14px';
+        div.style.whiteSpace = 'pre-wrap';
+        div.innerHTML = '<b>偵測到系統崩潰：</b><br>' + msg + '<br>檔案: ' + url + '<br>行號: ' + line;
+        document.body.appendChild(div);
+      };
+    </script>
+    <script type="module" crossorigin src="/car-shop-crm/assets/index-tA2NOmsp.js"></script>
+    <link rel="stylesheet" crossorigin href="/car-shop-crm/assets/index-BoD5Dd8S.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
