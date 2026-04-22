@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Customer, FilmInventory, InventoryLog } from '../types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://emqtgyntrpounnmssxcf.supabase.co';
+const supabaseKey = 'sb_publishable_4nQj5X6GRrTi3Xs0G31hAA_jfGTmCoo';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -11,21 +11,27 @@ export const api = {
   getCustomers: async () => {
     const { data, error } = await supabase.from('customers').select('*');
     if (error) throw error;
-    return (data || []).map(item => ({
-      ...(item.data || {}),
-      id: item.id,
-      name: item.name,
-      phone: item.phone,
-      plateNumber: item.plate_number,
-      brand: item.brand,
-      model: item.model,
-      status: item.status,
-      updatedAt: item.updated_at
-    }));
+    return (data || []).map(item => {
+      const extraData = (typeof item.data === 'object' && item.data !== null) ? item.data : {};
+      return {
+        ...extraData,
+        id: item.id,
+        name: item.name,
+        phone: item.phone,
+        plateNumber: item.plate_number,
+        brand: item.brand,
+        model: item.model,
+        status: item.status,
+        totalAmount: item.total_amount,
+        cost: item.cost,
+        revenue: item.revenue,
+        updatedAt: item.updated_at
+      };
+    });
   },
 
   upsertCustomer: async (customer: Customer) => {
-    const { id, name, phone, plateNumber, brand, model, status, ...rest } = customer;
+    const { id, name, phone, plateNumber, brand, model, status, totalAmount, cost, revenue, ...rest } = customer;
     const { error } = await supabase.from('customers').upsert({
       id,
       name,
@@ -34,6 +40,9 @@ export const api = {
       brand,
       model,
       status,
+      total_amount: totalAmount || 0,
+      cost: cost || 0,
+      revenue: revenue || 0,
       data: rest
     });
     if (error) {
@@ -58,7 +67,7 @@ export const api = {
   },
 
   getInventoryLogs: async () => {
-    const { data, error } = await supabase.from('inventory_logs').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('inventory_logs').select('*');
     if (error) throw error;
     return (data || []).map(item => item as InventoryLog);
   },
@@ -69,8 +78,7 @@ export const api = {
       item_id: log.itemId,
       action: log.action,
       details: log.details,
-      operator: log.operator,
-      created_at: new Date().toISOString()
+      operator: log.operator
     });
     if (error) throw error;
   },

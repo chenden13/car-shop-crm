@@ -56,7 +56,7 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
         };
 
         return {
-          id: row['編號'] ? String(row['編號']) : '無編號',
+          id: row['編號'] ? String(row['編號']) : `無編號-${Date.now()}-${index}`,
           name: String(row['車主姓名'] || ''),
           phone: String(row['電話'] || ''),
           plateNumber: String(row['車牌'] || ''),

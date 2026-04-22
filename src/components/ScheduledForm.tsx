@@ -57,12 +57,53 @@ export const ScheduledForm: React.FC<ScheduledFormProps> = ({ customer, onUpdate
           </div>
           <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>已下定・候排</span>
         </div>
-        <div style={{ display: 'flex', gap: '12px', background: '#fff', borderRadius: '8px', padding: '10px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#64748b' }}>
-            <Clock size={13} /> 留車：{customer.expectedStartDate ?? '未設定'}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#fff', borderRadius: '8px', padding: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>預計施工日期</label>
+              <input 
+                type="date" 
+                className="form-control" 
+                style={{ fontSize: '0.85rem' }}
+                value={formData.expectedStartDate || ''} 
+                onChange={(e) => setFormData(prev => ({ ...prev, expectedStartDate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>預計施工時間</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="e.g. 09:30"
+                style={{ fontSize: '0.85rem' }}
+                value={formData.constructionTime || ''} 
+                onChange={(e) => setFormData(prev => ({ ...prev, constructionTime: e.target.value }))}
+              />
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#64748b' }}>
-            <Clock size={13} /> 交車：{customer.expectedEndDate ?? '未設定'}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>預計交車日期</label>
+              <input 
+                type="date" 
+                className="form-control" 
+                style={{ fontSize: '0.85rem' }}
+                value={formData.expectedEndDate || ''} 
+                onChange={(e) => setFormData(prev => ({ ...prev, expectedEndDate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>預計交車時間</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="e.g. 17:00"
+                style={{ fontSize: '0.85rem' }}
+                value={formData.expectedDeliveryTime || ''} 
+                onChange={(e) => setFormData(prev => ({ ...prev, expectedDeliveryTime: e.target.value }))}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -5,8 +5,13 @@ const supabase = createClient(
 );
 
 async function test() {
-  const { data, error } = await supabase.from('customers').select('*').limit(1);
-  console.log('Row:', data);
-  console.log('Error:', error);
+  const { data, error } = await supabase.from('inventory').select('*').limit(1);
+  if (error) {
+    console.error('Error fetching inventory:', error);
+  } else if (data && data.length > 0) {
+    console.log('Columns in inventory:', Object.keys(data[0]));
+  } else {
+    console.log('inventory is empty or exists.');
+  }
 }
 test();

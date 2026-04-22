@@ -186,7 +186,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
                     textAlign: 'center',
                     whiteSpace: 'nowrap'
                   }}>
-                    {customer.id}
+                    {String(customer.id).includes('無編號') ? '無編號' : customer.id}
                   </div>
 
                   <div style={{ background: 'var(--primary)', color: '#fff', padding: '7px', borderRadius: '8px', flexShrink: 0 }}><Car size={18} /></div>

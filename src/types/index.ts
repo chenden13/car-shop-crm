@@ -49,8 +49,10 @@ export interface Customer {
   inCalendar?: boolean;
   mainService?: string;
   mainServiceBrand?: string;
-  expectedStartDate?: string;
-  expectedEndDate?: string;
+  expectedStartDate?: string;    // 預計施工日期
+  constructionTime?: string;     // 預計施工時間/進場時間
+  expectedEndDate?: string;      // 預計交車日期
+  expectedDeliveryTime?: string; // 預計交車時間
   materialOrdered?: boolean;
   
   windowTint?: string;

@@ -179,6 +179,40 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
         <textarea name="notes" className="form-control" rows={3} placeholder="針對客戶的特殊喜好或其他值得注意的地方..." value={formData.notes || ''} onChange={handleChange}></textarea>
       </div>
 
+      <h3 className="section-title">施工與排程</h3>
+      
+      <div className="form-group col-span-3">
+        <label className="form-label">預計施工日期</label>
+        <input type="date" name="expectedStartDate" className="form-control" value={formData.expectedStartDate || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-3">
+        <label className="form-label">預計施工時間</label>
+        <input type="text" name="constructionTime" className="form-control" placeholder="e.g. 09:30" value={formData.constructionTime || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-3">
+        <label className="form-label">預計交車日期</label>
+        <input type="date" name="expectedEndDate" className="form-control" value={formData.expectedEndDate || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-3">
+        <label className="form-label">預計交車時間</label>
+        <input type="text" name="expectedDeliveryTime" className="form-control" placeholder="e.g. 17:00" value={formData.expectedDeliveryTime || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-3" style={{ display: 'flex', alignItems: 'center', height: '42px', paddingTop: '15px' }}>
+        <label className="checkbox-wrap" style={{ fontWeight: 'normal' }}>
+          <input type="checkbox" name="inCalendar" checked={!!formData.inCalendar} onChange={handleChange} /> 已加入行事曆
+        </label>
+      </div>
+
+      <div className="form-group col-span-3" style={{ display: 'flex', alignItems: 'center', height: '42px', paddingTop: '15px' }}>
+        <label className="checkbox-wrap" style={{ fontWeight: 'normal' }}>
+          <input type="checkbox" name="materialOrdered" checked={!!formData.materialOrdered} onChange={handleChange} /> 膜料已叫貨
+        </label>
+      </div>
+
       <div className="form-actions col-span-12">
         <button type="button" className="btn btn-outline" onClick={onCancel}>暫停/取消</button>
         <button type="button" className="btn btn-outline" onClick={handleSaveOnly} style={{ border: 'none', background: '#f1f5f9' }}>

@@ -20,9 +20,11 @@ import { ConstructionMonitorPage } from './components/ConstructionMonitorPage';
 import { ScheduledForm } from './components/ScheduledForm';
 import { ExcelImport } from './components/ExcelImport';
 import { ArchiveEditForm } from './components/ArchiveEditForm';
+import { PendingListPage } from './components/PendingListPage';
 import { InventoryPage } from './components/InventoryPage';
 import { LoginPage } from './components/LoginPage';
-import { History, LayoutDashboard, Plus, FileUp, Box, LogOut, User as UserIcon } from 'lucide-react';
+import { ActiveConstructionPage } from './components/ActiveConstructionPage';
+import { History, LayoutDashboard, Plus, FileUp, Box, LogOut, User as UserIcon, Clock, Archive, Hammer } from 'lucide-react';
 
 
 
@@ -35,32 +37,29 @@ function App() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [inventory, setInventory] = useState<FilmInventory[]>([]);
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
-  const [view, setView] = useState<'kanban' | 'archive' | 'monitor' | 'inventory'>('kanban');
+  const [view, setView] = useState<'kanban' | 'pending' | 'archive' | 'monitor' | 'inventory'>('kanban');
   const [isLoading, setIsLoading] = useState(true);
   const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
 
-  // --- 雲端初始化 ---
   useEffect(() => {
     const initCloud = async () => {
-      // 增加超時保護：如果 5 秒內連不上雲端，強行進入離線模式
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('連線超時')), 5000));
+      console.log('正在連線至雲端:', 'https://emqtgyntrpounnmssxcf.supabase.co');
+      // alert('正在連線至: ' + 'https://emqtgyntrpounnmssxcf.supabase.co'); // 已確認，可暫不彈出
+      // 增加超時保護：如果 15 秒內連不上雲端，強行進入離線模式 (針對大量資料優化)
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('雲端連線超時，請檢查網路')), 15000));
       
       try {
-        const fetchTask = Promise.all([
-          api.getCustomers(),
-          api.getInventory(),
-          api.getInventoryLogs()
-        ]);
+        const cloudCustomers = await api.getCustomers().catch(e => { console.error('客戶讀取失敗', e); return []; });
+        const cloudInventory = await api.getInventory().catch(e => { console.error('庫存讀取失敗', e); return []; });
+        const cloudLogs = await api.getInventoryLogs().catch(e => { console.error('日誌讀取失敗', e); return []; });
         
-        const [cloudCustomers, cloudInventory, cloudLogs] = await Promise.race([fetchTask, timeout]) as any;
-        
+        console.log('雲端資料同步完畢:', cloudCustomers?.length, '筆客戶資料');
         setCustomers(cloudCustomers || []);
         setInventory(cloudInventory || []);
         setInventoryLogs(cloudLogs || []);
-      } catch (err) {
-        console.error('雲端連線失敗，目前為空狀態:', err);
-        setCustomers([]);
-        setInventory([]);
+      } catch (err: any) {
+        console.error('雲端總體初始化失敗:', err);
+        alert(`❌ 雲端同步嚴重失敗：\n${err.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -113,8 +112,17 @@ function App() {
 
   };
 
-  const generateCustomerId = () => {
-    return `C-${String(customers.length + 1).padStart(3, '0')}`;
+   const generateCustomerId = () => {
+    const list = Array.isArray(customers) ? customers : [];
+    return `C-${String(list.length + 1).padStart(3, '0')}`;
+  };
+
+  const handleOpenNewModal = () => {
+    setSelectedCustomer(null);
+    setIsNewModalOpen(false); // 先關閉以防狀態卡死
+    setTimeout(() => {
+      setIsNewModalOpen(true);
+    }, 0);
   };
 
   const handleAddOrUpdateCustomer = async (customerData: Partial<Customer>, moveToDeposit?: boolean) => {
@@ -125,6 +133,7 @@ function App() {
       target = { ...selectedCustomer, ...customerData, status: updatedStatus as StatusType };
     } else {
       target = {
+        id: generateCustomerId(),
         ...customerData,
         status: updatedStatus as StatusType,
       } as Customer;
@@ -262,12 +271,10 @@ function App() {
   };
 
   const columns: { id: StatusType; title: string }[] = [
-
     { id: 'new', title: '新增客人 (進件區)' },
     { id: 'deposit', title: '等待收訂 (施工報價)' },
     { id: 'scheduled', title: '已下定・未施工' },
     { id: 'construction', title: '施工中 (進度檢核)' },
-    { id: 'completed', title: '施工完成 (結案關懷)' },
   ];
 
 
@@ -294,64 +301,56 @@ function App() {
           <p style={{ color: '#64748b', fontWeight: 'bold' }}>{importProgress.current} / {importProgress.total} 筆已完成</p>
         </div>
       )}
-      <header className="app-header glass-panel">
-        <div className="brand">
-          <div style={{ width: '30px', height: '30px', background: 'var(--primary-color)', borderRadius: '8px' }}></div>
-          <h1>CarShop CRM PRO</h1>
+      <header className="app-header glass-panel" style={{ padding: '16px 24px', height: 'auto', gap: '30px' }}>
+        <div className="brand" style={{ gap: '15px' }}>
+          <div style={{ width: '38px', height: '38px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '1.2rem' }}>C</div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1 style={{ margin: 0, fontSize: '1.4rem', letterSpacing: '-0.5px' }}>CarShop CRM</h1>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>VERSION 2.1 PRO</span>
+          </div>
         </div>
-        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-          {view === 'kanban' && (
-            <>
-              <button 
-                className="btn btn-outline" 
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', borderColor: '#f59e0b', color: '#b45309' }} 
-                onClick={() => setView('monitor')}
-              >
-                <LayoutDashboard size={18} /> 施工進度監控
-              </button>
-              <button 
-                className="btn btn-outline" 
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }} 
-                onClick={() => setView('inventory')}
-              >
-                <Box size={18} /> 膜料庫存
-              </button>
-              <button 
-                className="btn btn-outline" 
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }} 
-                onClick={() => setView('archive')}
-              >
-                <History size={18} /> 完工檔案庫
-              </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => { setSelectedCustomer(null); setIsNewModalOpen(true); }}
-              >
-                <Plus size={18} /> 新增客戶資料
-              </button>
-            </>
-          )}
+
+        <div className="header-actions" style={{ display: 'flex', gap: '24px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
+          <div className="nav-group">
+            <button className={`nav-tab ${view === 'kanban' ? 'active' : ''}`} onClick={() => setView('kanban')}>
+              <LayoutDashboard size={17} /> 施工進度板
+            </button>
+            <button className={`nav-tab ${view === 'monitor' ? 'active' : ''}`} onClick={() => setView('monitor')}>
+              <Hammer size={17} /> 現場施工監控
+            </button>
+            <button className={`nav-tab ${view === 'pending' ? 'active' : ''}`} onClick={() => setView('pending')}>
+              <Clock size={18} /> 待施工排程
+            </button>
+            <button className={`nav-tab ${view === 'inventory' ? 'active' : ''}`} onClick={() => setView('inventory')}>
+              <Box size={17} /> 膜料庫存
+            </button>
+            <button className={`nav-tab ${view === 'archive' ? 'active' : ''}`} onClick={() => setView('archive')}>
+              <History size={17} /> 完工檔案
+            </button>
+          </div>
+
+          <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 8px' }}></div>
 
           {view === 'archive' && currentUser.role === 'admin' && (
-            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#059669', borderColor: '#10b981' }} onClick={() => setIsImportModalOpen(true)}>
-              <FileUp size={18} /> Excel 匯入
+            <button className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#059669', borderColor: '#10b981' }} onClick={() => setIsImportModalOpen(true)}>
+              <FileUp size={16} /> Excel 匯入
             </button>
           )}
 
-          <div style={{ marginLeft: '12px', borderLeft: '1px solid #e2e8f0', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '12px', background: 'var(--accent)', borderColor: 'var(--accent)', fontWeight: 'bold' }} onClick={handleOpenNewModal}>
+            <Plus size={18} /> 新增客戶
+          </button>
+
+          <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{currentUser.name}</div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{currentUser.role === 'admin' ? '系統管理員' : '店內員工'}</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-main)' }}>{currentUser.name}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{currentUser.role === 'admin' ? 'ADMIN' : 'STAFF'}</div>
             </div>
-            <button className="btn" onClick={handleLogout} style={{ background: '#f1f5f9', color: '#475569', padding: '8px' }}>
+            <button className="btn" onClick={handleLogout} style={{ background: '#f8fafc', color: '#64748b', padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center' }}>
               <LogOut size={18} />
             </button>
           </div>
         </div>
-
-
-
-
       </header>
 
       {view === 'kanban' ? (
@@ -376,6 +375,22 @@ function App() {
             </div>
           ))}
         </div>
+      ) : view === 'monitor' ? (
+        <ActiveConstructionPage
+          customers={customers}
+          onEditCustomer={(c) => {
+            setSelectedCustomer(c);
+            setIsConstructionModalOpen(true);
+          }}
+        />
+      ) : view === 'pending' ? (
+        <PendingListPage
+          customers={customers.filter(c => c.status !== 'construction')}
+          onEditCustomer={(c) => {
+            setSelectedCustomer(c);
+            setIsNewModalOpen(true);
+          }}
+        />
       ) : view === 'archive' ? (
         <ArchivePage 
           customers={customers} 
