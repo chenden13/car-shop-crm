@@ -16,6 +16,8 @@ export interface Customer {
   birthday?: string;
   address?: string;
   fromChannel?: string;
+  consultationDate?: string;
+  interestedAccessories?: string;
   
   // 車輛資訊
   plateNumber: string;
@@ -127,6 +129,7 @@ export interface FilmInventory {
   brand: string;
   color: string;
   size: string;
+  currentMeters?: number;
   location: StorageLocation;
   lastUpdated: string;
   notes?: string;
@@ -142,3 +145,13 @@ export interface InventoryLog {
 }
 
 
+export interface PurchaseRecord {
+  id: string;
+  orderDate: string;
+  itemName: string;
+  quantity: string;
+  price: number;
+  status: 'ordered' | 'received';
+  notes?: string;
+  operator: string;
+}

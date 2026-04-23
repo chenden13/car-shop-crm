@@ -4,27 +4,24 @@ import { initialCustomers, initialInventory } from './data/mockData';
 import { api } from './lib/api';
 
 
-import { CustomerCard } from './components/CustomerCard';
 import type { Customer, StatusType, FilmInventory, User, InventoryLog } from './types';
 
-
-
 import { Modal } from './components/Modal';
-import { NewCustomerForm } from './components/NewCustomerForm';
-import { QuoteForm } from './components/QuoteForm';
+import { PendingEditForm } from './components/PendingEditForm';
+import { InquiryPage } from './components/InquiryPage';
 import { ConstructionForm } from './components/ConstructionForm';
 import { CompletedForm } from './components/CompletedForm';
-import { CustomerDetail } from './components/CustomerDetail';
+import { IntakeForm } from './components/IntakeForm';
 import { ArchivePage } from './components/ArchivePage';
 import { ConstructionMonitorPage } from './components/ConstructionMonitorPage';
-import { ScheduledForm } from './components/ScheduledForm';
 import { ExcelImport } from './components/ExcelImport';
+import { PendingExcelImport } from './components/PendingExcelImport';
 import { ArchiveEditForm } from './components/ArchiveEditForm';
 import { PendingListPage } from './components/PendingListPage';
 import { InventoryPage } from './components/InventoryPage';
 import { LoginPage } from './components/LoginPage';
 import { ActiveConstructionPage } from './components/ActiveConstructionPage';
-import { History, LayoutDashboard, Plus, FileUp, Box, LogOut, User as UserIcon, Clock, Archive, Hammer } from 'lucide-react';
+import { History, Plus, FileUp, Box, LogOut, User as UserIcon, Clock, Archive, Hammer, UserPlus } from 'lucide-react';
 
 
 
@@ -37,7 +34,8 @@ function App() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [inventory, setInventory] = useState<FilmInventory[]>([]);
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
-  const [view, setView] = useState<'kanban' | 'pending' | 'archive' | 'monitor' | 'inventory'>('kanban');
+  const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
+  const [view, setView] = useState<'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory'>('inquiry');
   const [isLoading, setIsLoading] = useState(true);
   const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
 
@@ -52,11 +50,13 @@ function App() {
         const cloudCustomers = await api.getCustomers().catch(e => { console.error('客戶讀取失敗', e); return []; });
         const cloudInventory = await api.getInventory().catch(e => { console.error('庫存讀取失敗', e); return []; });
         const cloudLogs = await api.getInventoryLogs().catch(e => { console.error('日誌讀取失敗', e); return []; });
+        const cloudPurchases = await api.getPurchaseRecords().catch(e => { console.error('叫貨紀錄讀取失敗', e); return []; });
         
         console.log('雲端資料同步完畢:', cloudCustomers?.length, '筆客戶資料');
         setCustomers(cloudCustomers || []);
         setInventory(cloudInventory || []);
         setInventoryLogs(cloudLogs || []);
+        setPurchaseRecords(cloudPurchases || []);
       } catch (err: any) {
         console.error('雲端總體初始化失敗:', err);
         alert(`❌ 雲端同步嚴重失敗：\n${err.message}`);
@@ -75,41 +75,23 @@ function App() {
 
 
 
-  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
-
-
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
+  const [isPendingEditModalOpen, setIsPendingEditModalOpen] = useState(false);
   const [isConstructionModalOpen, setIsConstructionModalOpen] = useState(false);
   const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
-  const [isScheduledModalOpen, setIsScheduledModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isPendingImportModalOpen, setIsPendingImportModalOpen] = useState(false);
   const [isArchiveEditModalOpen, setIsArchiveEditModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
 
 
 
-  const getCustomersByStatus = (status: StatusType) => {
-    return customers.filter(c => c.status === status);
-  };
 
-  const handleCardClick = (customer: Customer) => {
+  const handleEditCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
-    
-    if (customer.status === 'new') {
-      setIsPreviewModalOpen(true);
-    } else if (customer.status === 'deposit') {
-      setIsQuoteModalOpen(true);
-    } else if (customer.status === 'scheduled') {
-      setIsScheduledModalOpen(true);
-    } else if (customer.status === 'construction') {
-      setIsConstructionModalOpen(true);
-    } else if (customer.status === 'completed') {
-      setIsCompletedModalOpen(true);
-    }
-
+    setIsPendingEditModalOpen(true);
   };
 
    const generateCustomerId = () => {
@@ -119,26 +101,10 @@ function App() {
 
   const handleOpenNewModal = () => {
     setSelectedCustomer(null);
-    setIsNewModalOpen(false); // 先關閉以防狀態卡死
-    setTimeout(() => {
-      setIsNewModalOpen(true);
-    }, 0);
+    setIsIntakeModalOpen(true);
   };
 
-  const handleAddOrUpdateCustomer = async (customerData: Partial<Customer>, moveToDeposit?: boolean) => {
-    const updatedStatus = moveToDeposit ? 'deposit' : 'new';
-    let target: Customer;
-
-    if (selectedCustomer) {
-      target = { ...selectedCustomer, ...customerData, status: updatedStatus as StatusType };
-    } else {
-      target = {
-        id: generateCustomerId(),
-        ...customerData,
-        status: updatedStatus as StatusType,
-      } as Customer;
-    }
-
+  const handleAddOrUpdateCustomer = async (target: Customer) => {
     try {
       await api.upsertCustomer(target);
       setCustomers(prev => {
@@ -151,9 +117,8 @@ function App() {
       alert('資料同步失敗，請檢查網路連線');
     }
     
-    setIsNewModalOpen(false);
-    setIsEditModalOpen(false);
-    setIsPreviewModalOpen(false);
+    setIsPendingEditModalOpen(false);
+    setIsIntakeModalOpen(false);
     setSelectedCustomer(null);
   };
 
@@ -164,16 +129,15 @@ function App() {
     } catch (err) {
       console.error('更新失敗:', err);
     }
-    setIsQuoteModalOpen(false);
     setIsConstructionModalOpen(false);
     setIsCompletedModalOpen(false);
-    setIsScheduledModalOpen(false);
     setSelectedCustomer(null);
   };
 
 
   const handleImport = async (newCustomers: Customer[]) => {
     setIsImportModalOpen(false);
+    setIsPendingImportModalOpen(false);
     
     // 過濾出尚未存在於本地狀態的資料
     const existingIds = new Set(customers.map(c => c.id));
@@ -204,12 +168,12 @@ function App() {
     }
   };
 
-  const handleUpdateInventory = async (item: FilmInventory) => {
+  const handleUpdateInventory = async (item: FilmInventory, detailsOverride?: string) => {
     const log: InventoryLog = {
       id: `LOG-${Date.now()}`,
       itemId: item.id,
       action: 'update',
-      details: `更新 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
+      details: detailsOverride || `更新 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
       timestamp: new Date().toLocaleString(),
       operator: currentUser?.name || '未知'
     };
@@ -249,33 +213,46 @@ function App() {
   };
 
 
-  const handleRemoveInventory = (id: string) => {
+  const handleRemoveInventory = async (id: string) => {
     const item = inventory.find(i => i.id === id);
-    setInventory(prev => prev.filter(i => i.id !== id));
-    if (item) {
-      setInventoryLogs(prev => [{
-        id: `LOG-${Date.now()}`,
-        itemId: id,
-        action: 'remove',
-        details: `移除項目 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
-        timestamp: new Date().toLocaleString(),
-        operator: currentUser?.name || '未知'
-      }, ...prev]);
+    if (!item) return;
+
+    const log: InventoryLog = {
+      id: `LOG-${Date.now()}`,
+      itemId: id,
+      action: 'remove',
+      details: `移除項目 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
+      timestamp: new Date().toLocaleString(),
+      operator: currentUser?.name || '未知'
+    };
+
+    try {
+      await Promise.all([
+        api.deleteInventory(id),
+        api.addInventoryLog(log)
+      ]);
+      setInventory(prev => prev.filter(i => i.id !== id));
+      setInventoryLogs(prev => [log, ...prev]);
+    } catch (err) {
+      console.error('移除庫存失敗:', err);
+      alert('移除失敗，請稍後再試。');
+    }
+  };
+
+  const handleAddPurchaseRecord = async (record: PurchaseRecord) => {
+    try {
+      await api.addPurchaseRecord(record);
+      setPurchaseRecords(prev => [record, ...prev]);
+    } catch (err) {
+      console.error('紀錄叫貨失敗:', err);
     }
   };
 
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setView('kanban');
+    setView('pending');
   };
-
-  const columns: { id: StatusType; title: string }[] = [
-    { id: 'new', title: '新增客人 (進件區)' },
-    { id: 'deposit', title: '等待收訂 (施工報價)' },
-    { id: 'scheduled', title: '已下定・未施工' },
-    { id: 'construction', title: '施工中 (進度檢核)' },
-  ];
 
 
 
@@ -312,14 +289,14 @@ function App() {
 
         <div className="header-actions" style={{ display: 'flex', gap: '24px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           <div className="nav-group">
-            <button className={`nav-tab ${view === 'kanban' ? 'active' : ''}`} onClick={() => setView('kanban')}>
-              <LayoutDashboard size={17} /> 施工進度板
-            </button>
-            <button className={`nav-tab ${view === 'monitor' ? 'active' : ''}`} onClick={() => setView('monitor')}>
-              <Hammer size={17} /> 現場施工監控
+            <button className={`nav-tab ${view === 'inquiry' ? 'active' : ''}`} onClick={() => setView('inquiry')}>
+              <UserPlus size={18} /> 諮詢進件區
             </button>
             <button className={`nav-tab ${view === 'pending' ? 'active' : ''}`} onClick={() => setView('pending')}>
               <Clock size={18} /> 待施工排程
+            </button>
+            <button className={`nav-tab ${view === 'monitor' ? 'active' : ''}`} onClick={() => setView('monitor')}>
+              <Hammer size={17} /> 現場施工監控
             </button>
             <button className={`nav-tab ${view === 'inventory' ? 'active' : ''}`} onClick={() => setView('inventory')}>
               <Box size={17} /> 膜料庫存
@@ -330,12 +307,6 @@ function App() {
           </div>
 
           <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 8px' }}></div>
-
-          {view === 'archive' && currentUser.role === 'admin' && (
-            <button className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#059669', borderColor: '#10b981' }} onClick={() => setIsImportModalOpen(true)}>
-              <FileUp size={16} /> Excel 匯入
-            </button>
-          )}
 
           <button className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '12px', background: 'var(--accent)', borderColor: 'var(--accent)', fontWeight: 'bold' }} onClick={handleOpenNewModal}>
             <Plus size={18} /> 新增客戶
@@ -353,28 +324,12 @@ function App() {
         </div>
       </header>
 
-      {view === 'kanban' ? (
-        <div className="board-container">
-          {columns.map(column => (
-            <div key={column.id} className="kanban-column glass-panel">
-              <div className="column-header">
-                <div className="column-title">
-                  {column.title}
-                  <span className="card-count">{getCustomersByStatus(column.id).length}</span>
-                </div>
-              </div>
-              <div className="column-body">
-                {getCustomersByStatus(column.id).map(customer => (
-                  <CustomerCard 
-                    key={customer.id} 
-                    customer={customer} 
-                    onClick={handleCardClick} 
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      {view === 'inquiry' ? (
+        <InquiryPage 
+          customers={customers}
+          onEditCustomer={handleEditCustomer}
+          userRole={currentUser.role}
+        />
       ) : view === 'monitor' ? (
         <ActiveConstructionPage
           customers={customers}
@@ -385,16 +340,15 @@ function App() {
         />
       ) : view === 'pending' ? (
         <PendingListPage
-          customers={customers.filter(c => c.status !== 'construction')}
-          onEditCustomer={(c) => {
-            setSelectedCustomer(c);
-            setIsNewModalOpen(true);
-          }}
+          customers={customers}
+          onEditCustomer={handleEditCustomer}
+          userRole={currentUser.role}
+          onImportClick={() => setIsPendingImportModalOpen(true)}
         />
       ) : view === 'archive' ? (
         <ArchivePage 
           customers={customers} 
-          onBack={() => setView('kanban')} 
+          onBack={() => setView('pending')} 
           onUpdate={(c) => setCustomers(prev => prev.map(x => x.id === c.id ? c : x))}
           onEdit={(c) => {
             setSelectedCustomer(c);
@@ -405,24 +359,27 @@ function App() {
             setIsPreviewModalOpen(true); 
           }} 
           userRole={currentUser.role}
+          onImportClick={() => setIsImportModalOpen(true)}
         />
 
       ) : view === 'inventory' ? (
         <InventoryPage 
           inventory={inventory}
           inventoryLogs={inventoryLogs}
+          purchaseRecords={purchaseRecords}
           userRole={currentUser.role}
           onAddInventory={handleAddInventory}
           onUpdateInventory={handleUpdateInventory}
           onRemoveInventory={handleRemoveInventory}
-          onBack={() => setView('kanban')}
+          onAddPurchaseRecord={handleAddPurchaseRecord}
+          onBack={() => setView('pending')}
         />
 
       ) : (
 
         <ConstructionMonitorPage 
           customers={customers} 
-          onBack={() => setView('kanban')}
+          onBack={() => setView('pending')}
           onEdit={(c) => {
             setSelectedCustomer(c);
             setIsConstructionModalOpen(true);
@@ -434,38 +391,33 @@ function App() {
 
 
 
-      {/* Preview Modal */}
-      <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title="客戶詳細資料摘要">
-        {selectedCustomer && (
-          <>
-            <CustomerDetail customer={selectedCustomer} />
-            <div className="form-actions" style={{ marginTop: '24px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
-              <button className="btn btn-outline" onClick={() => { setIsPreviewModalOpen(false); setIsEditModalOpen(true); }}>編輯資料</button>
-              <button className="btn btn-primary" onClick={() => handleAddOrUpdateCustomer(selectedCustomer, true)}>資料無誤，開始報價</button>
-            </div>
-          </>
-        )}
-      </Modal>
-
-      {/* New/Edit Form Modal */}
-      <Modal isOpen={isNewModalOpen || isEditModalOpen} onClose={() => { setIsNewModalOpen(false); setIsEditModalOpen(false); }} title={isEditModalOpen ? "編輯客戶資料" : "新增客戶資料表單"}>
-        <NewCustomerForm 
-          onSuggestId={generateCustomerId()} 
-          initialCustomer={selectedCustomer}
-          onSubmit={handleAddOrUpdateCustomer} 
-          onCancel={() => { setIsNewModalOpen(false); setIsEditModalOpen(false); }} 
+      {/* New Inquiry / Intake Modal */}
+      <Modal isOpen={isIntakeModalOpen} onClose={() => setIsIntakeModalOpen(false)} title="新增客戶資料表單">
+        <IntakeForm 
+          onSuggestId={generateCustomerId()}
+          onSubmit={(newCustomer) => {
+            handleAddOrUpdateCustomer(newCustomer);
+          }}
+          onCancel={() => setIsIntakeModalOpen(false)}
         />
       </Modal>
 
-      <Modal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} title="施工報價與排程">
-        {selectedCustomer && (
-          <QuoteForm 
-            customer={selectedCustomer} 
-            onSubmit={handleGenericUpdate} 
-            onCancel={() => setIsQuoteModalOpen(false)} 
-          />
-        )}
+      {/* Unified Pending Edit Modal */}
+      <Modal isOpen={isPendingEditModalOpen} onClose={() => setIsPendingEditModalOpen(false)} title={selectedCustomer ? "修改待施工案件" : "新增客戶 / 預約單"}>
+        <PendingEditForm 
+          customer={selectedCustomer} 
+          onSuggestId={generateCustomerId()}
+          onSubmit={(updatedCustomer, moveToConstruction) => {
+             handleAddOrUpdateCustomer(updatedCustomer);
+             if (moveToConstruction) {
+                // If it moved to construction, we might want some feedback or different behavior, 
+                // but handleAddOrUpdate already saves it with the new status.
+             }
+          }}
+          onCancel={() => setIsPendingEditModalOpen(false)}
+        />
       </Modal>
+
 
       <Modal isOpen={isConstructionModalOpen} onClose={() => setIsConstructionModalOpen(false)} title="施工檢核與照片上傳">
         {selectedCustomer && (
@@ -487,21 +439,6 @@ function App() {
         )}
       </Modal>
 
-      <Modal isOpen={isScheduledModalOpen} onClose={() => setIsScheduledModalOpen(false)} title="已下定・排程確認">
-        {selectedCustomer && (
-          <ScheduledForm
-            customer={selectedCustomer}
-            onUpdate={(c) => {
-              setCustomers(prev => prev.map(x => x.id === c.id ? c : x));
-              setIsScheduledModalOpen(false);
-              setSelectedCustomer(null);
-            }}
-            onStartConstruction={handleGenericUpdate}
-            onCancel={() => setIsScheduledModalOpen(false)}
-          />
-        )}
-      </Modal>
-
       <Modal isOpen={isArchiveEditModalOpen} onClose={() => setIsArchiveEditModalOpen(false)} title="微調完工存檔資料">
         {selectedCustomer && (
           <ArchiveEditForm 
@@ -518,10 +455,16 @@ function App() {
       </Modal>
 
       <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="完工資料 Excel 匯入">
-
         <ExcelImport 
           onImport={handleImport} 
           onCancel={() => setIsImportModalOpen(false)} 
+        />
+      </Modal>
+
+      <Modal isOpen={isPendingImportModalOpen} onClose={() => setIsPendingImportModalOpen(false)} title="排程資料 Excel 匯入">
+        <PendingExcelImport 
+          onImport={handleImport} 
+          onCancel={() => setIsPendingImportModalOpen(false)} 
         />
       </Modal>
 

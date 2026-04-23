@@ -1,26 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { taiwanCounties } from '../data/counties';
 import type { Customer } from '../types';
+import { X } from 'lucide-react';
 
-interface NewCustomerFormProps {
+interface IntakeFormProps {
   onSuggestId: string;
-  initialCustomer?: Customer | null;
-  onSubmit: (data: Partial<Customer>, moveToDeposit?: boolean) => void;
+  onSubmit: (data: Customer) => void;
   onCancel: () => void;
 }
 
-export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, initialCustomer, onSubmit, onCancel }) => {
+export const IntakeForm: React.FC<IntakeFormProps> = ({ onSuggestId, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState<Partial<Customer>>({
     id: onSuggestId,
     status: 'new',
     companion: 'alone'
   });
-
-  useEffect(() => {
-    if (initialCustomer) {
-      setFormData(initialCustomer);
-    }
-  }, [initialCustomer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -32,18 +26,22 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
     }
   };
 
-  const handleSaveOnly = (e: React.FormEvent) => { e.preventDefault(); onSubmit({ ...formData, status: 'new' }, false); };
-  const handleSaveAndMove = (e: React.FormEvent) => { e.preventDefault(); onSubmit({ ...formData, status: 'deposit' }, true); };
-
-  const isEditMode = !!initialCustomer;
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      status: 'new',
+      consultationDate: formData.consultationDate || new Date().toISOString().split('T')[0]
+    } as Customer);
+  };
 
   return (
-    <div className="form-grid">
-      <h3 className="section-title">基本資料</h3>
+    <form className="form-grid" onSubmit={handleFormSubmit}>
+      <h3 className="section-title" style={{ color: '#ef4444' }}>基本資料</h3>
       
       <div className="form-group col-span-3">
         <label className="form-label">客戶編號*</label>
-        <input required type="text" name="id" className="form-control" value={formData.id || ''} onChange={handleChange} disabled={isEditMode} />
+        <input required type="text" name="id" className="form-control" value={formData.id || ''} onChange={handleChange} />
       </div>
       <div className="form-group col-span-3">
         <label className="form-label">姓名*</label>
@@ -71,7 +69,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
         <input type="text" name="occupation" className="form-control" value={formData.occupation || ''} onChange={handleChange} />
       </div>
 
-      <h3 className="section-title">車輛資訊</h3>
+      <h3 className="section-title" style={{ color: '#ef4444', marginTop: '20px' }}>車輛資訊</h3>
       
       <div className="form-group col-span-4">
         <label className="form-label">車牌號碼*</label>
@@ -86,7 +84,39 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
         <input type="text" name="model" className="form-control" placeholder="911, Model Y..." value={formData.model || ''} onChange={handleChange} />
       </div>
 
-      <h3 className="section-title">客戶特色與習性</h3>
+      <h3 className="section-title" style={{ color: '#ef4444', marginTop: '20px' }}>諮詢需求與興趣</h3>
+      
+      <div className="form-group col-span-4">
+        <label className="form-label">主要施工意向</label>
+        <select name="mainService" className="form-control" value={formData.mainService || ''} onChange={handleChange}>
+          <option value="">請選擇</option>
+          <option value="全車犀牛皮">全車犀牛皮</option>
+          <option value="全車改色膜">全車改色膜</option>
+          <option value="局部保護/改色">局部保護/改色</option>
+        </select>
+      </div>
+
+      <div className="form-group col-span-4">
+        <label className="form-label">隔熱紙需求</label>
+        <input type="text" name="windowTint" className="form-control" placeholder="品牌或型號" value={formData.windowTint || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-4">
+        <label className="form-label">電改項目</label>
+        <input type="text" name="electricMod" className="form-control" placeholder="例如: 吸門, 電動前車箱" value={formData.electricMod || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-4">
+        <label className="form-label">電子後視鏡</label>
+        <input type="text" name="digitalMirror" className="form-control" placeholder="品牌或規格" value={formData.digitalMirror || ''} onChange={handleChange} />
+      </div>
+
+      <div className="form-group col-span-8">
+        <label className="form-label">感興趣的配件</label>
+        <input type="text" name="interestedAccessories" className="form-control" placeholder="車牌框, 卡鉗改色, 其他配件..." value={formData.interestedAccessories || ''} onChange={handleChange} />
+      </div>
+
+      <h3 className="section-title" style={{ color: '#ef4444', marginTop: '20px' }}>客戶特色與習性</h3>
 
       <div className="form-group col-span-4">
         <label className="form-label">工作/方便地點</label>
@@ -135,7 +165,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
         <input type="text" name="hobbies" className="form-control" placeholder="高爾夫, 露營..." value={formData.hobbies || ''} onChange={handleChange} />
       </div>
 
-      <h3 className="section-title">外觀與特徵紀錄 (選填有助於辨識)</h3>
+      <h3 className="section-title" style={{ color: '#ef4444', marginTop: '20px' }}>外觀與特徵紀錄 (選填有助於辨識)</h3>
       
       <div className="form-group col-span-3">
         <label className="form-label">體型</label>
@@ -146,7 +176,6 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
           <option value="heavy">偏胖</option>
         </select>
       </div>
-
       <div className="form-group col-span-3">
         <label className="form-label">頭髮</label>
         <select name="hairLength" className="form-control" value={formData.hairLength || ''} onChange={handleChange}>
@@ -156,22 +185,18 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
           <option value="long">長髮</option>
         </select>
       </div>
-
       <div className="form-group col-span-3">
         <label className="form-label">經濟預估</label>
         <select name="wealthLevel" className="form-control" value={formData.wealthLevel || ''} onChange={handleChange}>
           <option value="">未記錄</option>
-          <option value="high">感覺很有錢</option>
-          <option value="medium">小康/中等</option>
-          <option value="normal">一般</option>
+          <option value="high">很有錢</option>
+          <option value="medium">一般</option>
+          <option value="normal">普通</option>
         </select>
       </div>
-
       <div className="form-group col-span-3">
         <label className="form-label">特徵</label>
-        <div style={{ display: 'flex', alignItems: 'center', height: '42px' }}>
-          <label className="checkbox-wrap" style={{ fontWeight: 'normal' }}><input type="checkbox" name="wearsGlasses" checked={!!formData.wearsGlasses} onChange={handleChange} /> 戴眼鏡</label>
-        </div>
+        <label className="checkbox-wrap" style={{ fontWeight: 'normal', height: '42px', display: 'flex', alignItems: 'center' }}><input type="checkbox" name="wearsGlasses" checked={!!formData.wearsGlasses} onChange={handleChange} /> 戴眼鏡</label>
       </div>
 
       <div className="form-group col-span-12">
@@ -179,47 +204,10 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onSuggestId, i
         <textarea name="notes" className="form-control" rows={3} placeholder="針對客戶的特殊喜好或其他值得注意的地方..." value={formData.notes || ''} onChange={handleChange}></textarea>
       </div>
 
-      <h3 className="section-title">施工與排程</h3>
-      
-      <div className="form-group col-span-3">
-        <label className="form-label">預計施工日期</label>
-        <input type="date" name="expectedStartDate" className="form-control" value={formData.expectedStartDate || ''} onChange={handleChange} />
+      <div className="col-span-12 form-actions" style={{ marginTop: '20px' }}>
+        <button type="button" className="btn btn-outline" onClick={onCancel}>取消</button>
+        <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>儲存並建立諮詢檔案</button>
       </div>
-
-      <div className="form-group col-span-3">
-        <label className="form-label">預計施工時間</label>
-        <input type="text" name="constructionTime" className="form-control" placeholder="e.g. 09:30" value={formData.constructionTime || ''} onChange={handleChange} />
-      </div>
-
-      <div className="form-group col-span-3">
-        <label className="form-label">預計交車日期</label>
-        <input type="date" name="expectedEndDate" className="form-control" value={formData.expectedEndDate || ''} onChange={handleChange} />
-      </div>
-
-      <div className="form-group col-span-3">
-        <label className="form-label">預計交車時間</label>
-        <input type="text" name="expectedDeliveryTime" className="form-control" placeholder="e.g. 17:00" value={formData.expectedDeliveryTime || ''} onChange={handleChange} />
-      </div>
-
-      <div className="form-group col-span-3" style={{ display: 'flex', alignItems: 'center', height: '42px', paddingTop: '15px' }}>
-        <label className="checkbox-wrap" style={{ fontWeight: 'normal' }}>
-          <input type="checkbox" name="inCalendar" checked={!!formData.inCalendar} onChange={handleChange} /> 已加入行事曆
-        </label>
-      </div>
-
-      <div className="form-group col-span-3" style={{ display: 'flex', alignItems: 'center', height: '42px', paddingTop: '15px' }}>
-        <label className="checkbox-wrap" style={{ fontWeight: 'normal' }}>
-          <input type="checkbox" name="materialOrdered" checked={!!formData.materialOrdered} onChange={handleChange} /> 膜料已叫貨
-        </label>
-      </div>
-
-      <div className="form-actions col-span-12">
-        <button type="button" className="btn btn-outline" onClick={onCancel}>暫停/取消</button>
-        <button type="button" className="btn btn-outline" onClick={handleSaveOnly} style={{ border: 'none', background: '#f1f5f9' }}>
-          {isEditMode ? '儲存客戶資料' : '儲存為新客 (先不報價)'}
-        </button>
-        <button type="button" className="btn btn-primary" onClick={handleSaveAndMove}>資料確認完成，轉至「等待收訂」</button>
-      </div>
-    </div>
+    </form>
   );
 };

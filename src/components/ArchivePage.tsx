@@ -3,7 +3,7 @@ import type { Customer, Role } from '../types';
 
 import {
   Search, Car, User, Phone, Calendar, ShieldCheck,
-  ChevronDown, ChevronUp, Gift, Package, CheckCircle2,
+  ChevronDown, ChevronUp, Gift, Package, CheckCircle2, FileUp,
   XCircle, FileText, Glasses, AlertCircle, Hash, Heart, Star, DollarSign,
   ArrowUp, ArrowDown
 } from 'lucide-react';
@@ -16,6 +16,7 @@ interface ArchivePageProps {
   onUpdate: (customer: Customer) => void;
   onEdit: (customer: Customer) => void;
   userRole?: Role;
+  onImportClick: () => void;
 }
 
 
@@ -59,7 +60,7 @@ const Section = ({ icon, title, children, color = '#64748b' }: { icon: React.Rea
 );
 
 export const ArchivePage: React.FC<ArchivePageProps> = ({ 
-  customers, onBack, onUpdate, onEdit, onViewDetail, userRole 
+  customers, onBack, onUpdate, onEdit, onViewDetail, userRole, onImportClick
 }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +68,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
   const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const itemsPerPage = 200;
 
   const completedCustomers = customers.filter(c => c.status === 'completed');
   const filteredCustomers = completedCustomers
@@ -89,9 +90,14 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         const cmp = idA.localeCompare(idB, undefined, { numeric: true });
         return sortOrder === 'asc' ? cmp : -cmp;
       } else {
-        const da = String(a.expectedStartDate || '');
-        const db = String(b.expectedStartDate || '');
-        const cmp = da.localeCompare(db);
+        const isDate = (d: string) => /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(d.trim());
+        let valA = String(a.expectedStartDate || '').trim();
+        let valB = String(b.expectedStartDate || '').trim();
+        
+        if (!isDate(valA)) valA = '0000-00-00';
+        if (!isDate(valB)) valB = '0000-00-00';
+
+        const cmp = valA.localeCompare(valB);
         return sortOrder === 'asc' ? cmp : -cmp;
       }
     });
@@ -120,6 +126,11 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
           <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>查詢與管理所有已結案的服務紀錄・共 {completedCustomers.length} 筆</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {userRole === 'admin' && (
+            <button className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#059669', borderColor: '#10b981' }} onClick={onImportClick}>
+              <FileUp size={16} /> Excel 匯入
+            </button>
+          )}
           <div style={{ position: 'relative', width: '300px' }}>
             <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
             <input
@@ -161,7 +172,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
       </header>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {paginatedCustomers.length > 0 ? paginatedCustomers.map(customer => {
           const isExpanded = expandedId === customer.id;
           return (
@@ -169,7 +180,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
               {/* ── Summary Row ── */}
               <div
-                style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 1.5fr) 2fr 1fr 1fr 80px', alignItems: 'center', padding: '18px 20px', cursor: 'pointer', gap: '20px' }}
+                style={{ display: 'grid', gridTemplateColumns: 'minmax(150px, 1.5fr) 2fr 1fr 1fr 70px', alignItems: 'center', padding: '10px 16px', cursor: 'pointer', gap: '12px' }}
                 onClick={() => toggleExpand(customer.id)}
               >
                 {/* ID + Car */}
@@ -179,7 +190,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
                     color: '#fff', 
                     padding: '3px 8px', 
                     borderRadius: '5px', 
-                    fontSize: '0.75rem', 
+                    fontSize: '0.72rem', 
                     fontWeight: 'bold', 
                     flexShrink: 0,
                     minWidth: '50px',
@@ -189,41 +200,41 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
                     {String(customer.id).includes('無編號') ? '無編號' : customer.id}
                   </div>
 
-                  <div style={{ background: 'var(--primary)', color: '#fff', padding: '7px', borderRadius: '8px', flexShrink: 0 }}><Car size={18} /></div>
+                  <div style={{ background: 'var(--primary)', color: '#fff', padding: '5px', borderRadius: '6px', flexShrink: 0 }}><Car size={16} /></div>
                   <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{customer.plateNumber}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{customer.brand} {customer.model}</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{customer.plateNumber}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{customer.brand} {customer.model}</div>
                   </div>
                 </div>
 
                 {/* Service */}
-                <div style={{ background: '#f0fdf4', padding: '8px 14px', borderRadius: '10px', border: '1px solid #dcfce7' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#166534', fontWeight: 'bold', fontSize: '0.78rem', marginBottom: '3px' }}>
-                    <ShieldCheck size={13} /> 施工內容
+                <div style={{ background: '#f0fdf4', padding: '6px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#166534', fontWeight: 'bold', fontSize: '0.75rem', marginBottom: '2px' }}>
+                    <ShieldCheck size={12} /> 施工內容
                   </div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: '600' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
                     {customer.mainService || '未填'} {customer.mainServiceBrand ? `(${customer.mainServiceBrand})` : ''}
                   </div>
-                  {customer.windowTint && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>隔熱紙: {customer.windowTint}</div>}
+                  {customer.windowTint && <div style={{ fontSize: '0.7rem', color: '#64748b' }}>隔熱紙: {customer.windowTint}</div>}
                 </div>
 
                 {/* Customer */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600', fontSize: '0.88rem' }}><User size={13} color="#64748b" /> {customer.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: '#64748b' }}><Phone size={13} color="#94a3b8" /> {customer.phone}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600', fontSize: '0.85rem' }}><User size={12} color="#64748b" /> {customer.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: '#64748b' }}><Phone size={12} color="#94a3b8" /> {customer.phone}</div>
                 </div>
 
                 {/* Date */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.78rem' }}><Calendar size={12} /> 施工日期</div>
-                  <div style={{ fontWeight: '600', fontSize: '0.88rem' }}>{customer.expectedStartDate || '未排定'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.75rem' }}><Calendar size={12} /> 施工日期</div>
+                  <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{customer.expectedStartDate || '未定'}</div>
                 </div>
 
                 {/* Expand button */}
                 <div style={{ textAlign: 'right' }}>
                   <button
                     className="btn btn-outline"
-                    style={{ padding: '5px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', background: isExpanded ? '#eff6ff' : '', borderColor: isExpanded ? '#bfdbfe' : '' }}
+                    style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', background: isExpanded ? '#eff6ff' : '', borderColor: isExpanded ? '#bfdbfe' : '' }}
                   >
                     明細 {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
