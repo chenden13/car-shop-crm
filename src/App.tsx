@@ -4,7 +4,7 @@ import { initialCustomers, initialInventory } from './data/mockData';
 import { api } from './lib/api';
 
 
-import type { Customer, StatusType, FilmInventory, User, InventoryLog } from './types';
+import type { Customer, StatusType, FilmInventory, User, InventoryLog, PurchaseRecord, FinanceRecord } from './types';
 
 import { Modal } from './components/Modal';
 import { PendingEditForm } from './components/PendingEditForm';
@@ -21,7 +21,8 @@ import { PendingListPage } from './components/PendingListPage';
 import { InventoryPage } from './components/InventoryPage';
 import { LoginPage } from './components/LoginPage';
 import { ActiveConstructionPage } from './components/ActiveConstructionPage';
-import { History, Plus, FileUp, Box, LogOut, User as UserIcon, Clock, Archive, Hammer, UserPlus } from 'lucide-react';
+import { FinancePage } from './components/FinancePage';
+import { History, Plus, FileUp, Box, LogOut, User as UserIcon, Clock, Archive, Hammer, UserPlus, Wallet } from 'lucide-react';
 
 
 
@@ -35,7 +36,8 @@ function App() {
   const [inventory, setInventory] = useState<FilmInventory[]>([]);
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
   const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
-  const [view, setView] = useState<'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory'>('inquiry');
+  const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
+  const [view, setView] = useState<'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory' | 'finance'>('inquiry');
   const [isLoading, setIsLoading] = useState(true);
   const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
 
@@ -51,12 +53,15 @@ function App() {
         const cloudInventory = await api.getInventory().catch(e => { console.error('庫存讀取失敗', e); return []; });
         const cloudLogs = await api.getInventoryLogs().catch(e => { console.error('日誌讀取失敗', e); return []; });
         const cloudPurchases = await api.getPurchaseRecords().catch(e => { console.error('叫貨紀錄讀取失敗', e); return []; });
+        const cloudFinance = await api.getFinanceRecords().catch(e => { console.error('財務紀錄讀取失敗', e); return []; });
         
         console.log('雲端資料同步完畢:', cloudCustomers?.length, '筆客戶資料');
         setCustomers(cloudCustomers || []);
         setInventory(cloudInventory || []);
         setInventoryLogs(cloudLogs || []);
+        console.log('載入叫貨紀錄:', cloudPurchases?.length, '筆');
         setPurchaseRecords(cloudPurchases || []);
+        setFinanceRecords(cloudFinance || []);
       } catch (err: any) {
         console.error('雲端總體初始化失敗:', err);
         alert(`❌ 雲端同步嚴重失敗：\n${err.message}`);
@@ -185,8 +190,9 @@ function App() {
       ]);
       setInventory(prev => prev.map(i => i.id === item.id ? item : i));
       setInventoryLogs(prev => [log, ...prev]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('同步庫存失敗:', err);
+      window.alert(`同步庫存失敗: ${err.message || '未知錯誤'}。請確認資料庫是否有 inventory 與 inventory_logs 表格。`);
     }
   };
 
@@ -207,8 +213,9 @@ function App() {
       ]);
       setInventory(prev => [...prev, item]);
       setInventoryLogs(prev => [log, ...prev]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('新增庫存失敗:', err);
+      window.alert(`新增庫存失敗: ${err.message || '未知錯誤'}。如果是新環境，請確保 Supabase 已建立 inventory 表格。`);
     }
   };
 
@@ -233,18 +240,51 @@ function App() {
       ]);
       setInventory(prev => prev.filter(i => i.id !== id));
       setInventoryLogs(prev => [log, ...prev]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('移除庫存失敗:', err);
       alert('移除失敗，請稍後再試。');
     }
   };
 
   const handleAddPurchaseRecord = async (record: PurchaseRecord) => {
+    console.log('App.tsx: 準備新增叫貨紀錄', record);
     try {
       await api.addPurchaseRecord(record);
-      setPurchaseRecords(prev => [record, ...prev]);
+      setPurchaseRecords(prev => {
+        const next = [record, ...prev];
+        console.log('App.tsx: 更新後的紀錄總數:', next.length);
+        return next;
+      });
+      window.alert('✅ 叫貨紀錄已成功暫存！(若尚未建立資料庫表格，重整後會更新回模擬資料)');
+    } catch (err: any) {
+      console.error('新增叫貨紀錄失敗:', err);
+      window.alert(`❌ 新增失敗: ${err.message || '未知錯誤'}`);
+    }
+  };
+
+  const handleAddFinanceRecord = async (record: FinanceRecord) => {
+    try {
+      await api.addFinanceRecord(record);
+      setFinanceRecords(prev => {
+        const next = [record, ...prev];
+        localStorage.setItem('financeRecords', JSON.stringify(next));
+        return next;
+      });
     } catch (err) {
-      console.error('紀錄叫貨失敗:', err);
+      console.error('新增財務紀錄失敗:', err);
+    }
+  };
+
+  const handleDeleteFinanceRecord = async (id: string) => {
+    try {
+      await api.deleteFinanceRecord(id);
+      setFinanceRecords(prev => {
+        const next = prev.filter(r => r.id !== id);
+        localStorage.setItem('financeRecords', JSON.stringify(next));
+        return next;
+      });
+    } catch (err) {
+      console.error('刪除財務紀錄失敗:', err);
     }
   };
 
@@ -275,6 +315,7 @@ function App() {
           <div style={{ width: '300px', height: '10px', background: '#e2e8f0', borderRadius: '5px', overflow: 'hidden', marginBottom: '10px' }}>
             <div style={{ width: `${(importProgress.current / importProgress.total) * 100}%`, height: '100%', background: '#e11d48', transition: 'width 0.2s' }}></div>
           </div>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>V.613 PRO MAX - 內部管理系統</p>
           <p style={{ color: '#64748b', fontWeight: 'bold' }}>{importProgress.current} / {importProgress.total} 筆已完成</p>
         </div>
       )}
@@ -282,8 +323,10 @@ function App() {
         <div className="brand" style={{ gap: '15px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '1.2rem' }}>C</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', letterSpacing: '-0.5px' }}>CarShop CRM</h1>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>VERSION 2.1 PRO</span>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '-0.5px' }}>
+              好室多膜 CRM
+            </h1>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 'bold' }}>PRO MAX V.613</span>
           </div>
         </div>
 
@@ -298,19 +341,18 @@ function App() {
             <button className={`nav-tab ${view === 'monitor' ? 'active' : ''}`} onClick={() => setView('monitor')}>
               <Hammer size={17} /> 現場施工監控
             </button>
+            <button className={`nav-tab ${view === 'archive' ? 'active' : ''}`} onClick={() => setView('archive')}>
+              <History size={17} /> 完工檔案
+            </button>
             <button className={`nav-tab ${view === 'inventory' ? 'active' : ''}`} onClick={() => setView('inventory')}>
               <Box size={17} /> 膜料庫存
             </button>
-            <button className={`nav-tab ${view === 'archive' ? 'active' : ''}`} onClick={() => setView('archive')}>
-              <History size={17} /> 完工檔案
+            <button className={`nav-tab ${view === 'finance' ? 'active' : ''}`} onClick={() => setView('finance')}>
+              <Wallet size={17} /> 收支記帳
             </button>
           </div>
 
           <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 8px' }}></div>
-
-          <button className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '12px', background: 'var(--accent)', borderColor: 'var(--accent)', fontWeight: 'bold' }} onClick={handleOpenNewModal}>
-            <Plus size={18} /> 新增客戶
-          </button>
 
           <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ textAlign: 'right' }}>
@@ -329,6 +371,7 @@ function App() {
           customers={customers}
           onEditCustomer={handleEditCustomer}
           userRole={currentUser.role}
+          onAddNew={() => setIsIntakeModalOpen(true)}
         />
       ) : view === 'monitor' ? (
         <ActiveConstructionPage
@@ -344,6 +387,7 @@ function App() {
           onEditCustomer={handleEditCustomer}
           userRole={currentUser.role}
           onImportClick={() => setIsPendingImportModalOpen(true)}
+          onAddNew={() => { setSelectedCustomer(null); setIsPendingEditModalOpen(true); }}
         />
       ) : view === 'archive' ? (
         <ArchivePage 
@@ -375,6 +419,12 @@ function App() {
           onBack={() => setView('pending')}
         />
 
+      ) : view === 'finance' ? (
+        <FinancePage 
+          records={financeRecords}
+          onAddRecord={handleAddFinanceRecord}
+          onDeleteRecord={handleDeleteFinanceRecord}
+        />
       ) : (
 
         <ConstructionMonitorPage 

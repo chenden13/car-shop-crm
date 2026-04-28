@@ -107,18 +107,30 @@ export const ConstructionForm: React.FC<ConstructionFormProps> = ({ customer, on
   };
 
 
-  const removePhoto = (index: number, type: 'damage' | 'progress') => {
+  const removePhoto = (url: string, type: 'damage' | 'progress') => {
     if (type === 'damage') {
-      setDamagePhotos(prev => prev.filter((_, i) => i !== index));
+      setDamagePhotos(prev => prev.filter(p => p.url !== url));
     } else {
-      setProgressPhotos(prev => prev.filter((_, i) => i !== index));
+      setProgressPhotos(prev => prev.filter(p => p.url !== url));
     }
   };
 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ ...formData, damagePhotos, progressPhotos, status: 'completed' });
+    const today = new Date().toISOString().split('T')[0];
+    const checkup = new Date();
+    checkup.setMonth(checkup.getMonth() + 1);
+    const checkupDate = checkup.toISOString().split('T')[0];
+    
+    onSubmit({ 
+      ...formData, 
+      damagePhotos, 
+      progressPhotos, 
+      status: 'completed',
+      deliveryDate: today,
+      checkupDate: checkupDate
+    });
   };
 
 
@@ -211,7 +223,7 @@ export const ConstructionForm: React.FC<ConstructionFormProps> = ({ customer, on
                 <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.7rem', padding: '2px 6px', borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px', textAlign: 'center' }}>
                   {photo.category}
                 </div>
-                <button type="button" onClick={() => removePhoto(i, 'damage')} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '12px', lineHeight: '20px' }}>×</button>
+                <button type="button" onClick={() => removePhoto(photo.url, 'damage')} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '12px', lineHeight: '20px' }}>×</button>
               </div>
             ))}
           </div>
@@ -236,7 +248,7 @@ export const ConstructionForm: React.FC<ConstructionFormProps> = ({ customer, on
                 <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.7rem', padding: '2px 6px', borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px', textAlign: 'center' }}>
                   {photo.category}
                 </div>
-                <button type="button" onClick={() => removePhoto(i, 'progress')} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '12px', lineHeight: '20px' }}>×</button>
+                <button type="button" onClick={() => removePhoto(photo.url, 'progress')} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '12px', lineHeight: '20px' }}>×</button>
               </div>
             ))}
           </div>

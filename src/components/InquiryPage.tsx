@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, UserPlus, Car, Tag, Clock, User, Phone, Calendar, ChevronRight } from 'lucide-react';
+import { Search, UserPlus, Car, Tag, Clock, User, Phone, Calendar, ChevronRight, Plus } from 'lucide-react';
 import type { Customer, StatusType, Role } from '../types';
 
 interface InquiryPageProps {
@@ -33,6 +33,9 @@ export const InquiryPage: React.FC<InquiryPageProps> = ({ customers, onEditCusto
         </div>
 
         <div style={{ display: 'flex', gap: '15px' }}>
+          <button className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.85rem', borderRadius: '10px' }} onClick={onAddNew}>
+            <Plus size={16} /> 新增諮詢客戶
+          </button>
           <div style={{ position: 'relative' }}>
             <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
             <input
@@ -44,7 +47,7 @@ export const InquiryPage: React.FC<InquiryPageProps> = ({ customers, onEditCusto
               style={{
                 padding: '10px 15px 10px 40px',
                 borderRadius: '12px',
-                width: '300px',
+                width: '260px',
                 fontSize: '0.9rem',
                 outline: 'none'
               }}

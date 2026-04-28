@@ -14,19 +14,18 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
   const handleDownloadTemplate = () => {
     const wb = XLSX.utils.book_new();
     const data = [[
-      '編號', '車主姓名', '電話', '車牌', '品牌', '型號', '施工內容', '施工膜料廠牌', '細項(顏色)',
-      '預計施工日期', '施工日期', '交車日期', '總金額', '成本', 
-      '活動折扣', '貨號', '是否已叫貨', '是否已開報價單', 
-      '大禮包發送', '表單發送', '兩週關懷', '登移行事曆', '備註'
+      '編號', '姓名', '電話', '車牌', '車種', '施工項目', '品牌', '膜料細項', '是否叫貨', '是否建立報價單', 
+      '備註', '金額', '成本', '收益', '施工時間', '交車時間', '預計施工時間', '健檢時間', 
+      'POS系統編號', '大禮包發送', '表單發送', '兩周關心', '是否加入行事曆', '照片是否傳送'
     ], [
-      'C-001', '王小明', '0912345678', 'ABC-1234', 'Tesla', 'Model 3', '全車改色膜', '3M', '磨砂陶瓷黑',
-      '2024-05-01', '2024-05-02', '2024-05-05', '65000', '25000', 
-      '生日優惠', 'TM-332', 'O', 'O', 'O', 'O', 'O', 'O', '範例備註'
+      'C-001', '王小明', '0912345678', 'ABC-1234', 'Tesla Model 3', '全車改色膜', '3M', '磨砂陶瓷黑', 'O', 'O',
+      '範例備註', '65000', '25000', '40000', '2026-05-01', '2026-05-05', '2026-05-03', '2026-06-05',
+      'POS-888', 'O', 'O', 'O', 'O', 'O'
     ]];
 
     const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '匯入範例');
-    XLSX.writeFile(wb, 'CRM_匯入範本_全功能版.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, '正式匯入範例');
+    XLSX.writeFile(wb, 'HouseWrapper_正式匯入範本.xlsx');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,48 +41,53 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
       const data = XLSX.utils.sheet_to_json(ws);
 
       const importedCustomers: Customer[] = data.map((row: any, index) => {
-        // 輔助函式：判斷是否為 'O'
-        const isChecked = (val: any) => String(val || '').trim().toUpperCase() === 'O';
+        const isChecked = (val: any) => {
+          const s = String(val || '').trim().toUpperCase();
+          return s === 'O' || s === 'TRUE' || s === '是' || s === '1';
+        };
 
-        // 輔助函式：處理 Excel 五位數日期
         const parseDate = (val: any) => {
           if (!val) return '';
           if (typeof val === 'number') {
             const date = new Date(Math.round((val - 25569) * 86400 * 1000));
             return date.toISOString().split('T')[0];
           }
-          return String(val).replace(/\//g, '-').trim();
+          let s = String(val).replace(/\//g, '-').trim();
+          if (s.includes(' ')) s = s.split(' ')[0];
+          return s;
         };
 
         return {
           id: row['編號'] ? String(row['編號']) : `無編號-${Date.now()}-${index}`,
-          name: String(row['車主姓名'] || ''),
+          name: String(row['姓名'] || ''),
           phone: String(row['電話'] || ''),
           plateNumber: String(row['車牌'] || ''),
-          brand: String(row['品牌'] || ''),
-          model: String(row['型號'] || ''),
+          model: String(row['車種'] || ''),
           status: 'completed',
           
-          mainService: row['施工內容'],
-          mainServiceBrand: row['施工膜料廠牌'],
-          filmColor: row['細項(顏色)'],
-          materialCode: row['貨號'],
-          promotion: row['活動折扣'],
+          mainService: String(row['施工項目'] || ''),
+          mainServiceBrand: String(row['品牌'] || ''),
+          filmColor: String(row['膜料細項'] || ''),
+          notes: String(row['備註'] || ''),
           
+          materialOrdered: isChecked(row['是否叫貨']),
+          quoteCreated: isChecked(row['是否建立報價單']),
           giftGiven: isChecked(row['大禮包發送']),
           formSent: isChecked(row['表單發送']),
-          followUp2Weeks: isChecked(row['兩週關懷']),
-          inCalendar: isChecked(row['登移行事曆']),
-          materialOrdered: isChecked(row['是否已叫貨']),
-          quoteCreated: isChecked(row['是否已開報價單']),
+          followUp2Weeks: isChecked(row['兩周關心']),
+          inCalendar: isChecked(row['是否加入行事曆']),
+          photosSent: isChecked(row['照片是否傳送']),
           
-          expectedStartDate: parseDate(row['預計施工日期']),
-          deliveryDate: parseDate(row['交車日期']),
-          notes: row['備註'],
-          
-          totalAmount: Number(row['總金額']) || 0,
+          totalAmount: Number(row['金額']) || 0,
           cost: Number(row['成本']) || 0,
-          revenue: (Number(row['總金額']) || 0) - (Number(row['成本']) || 0),
+          revenue: Number(row['收益']) || (Number(row['金額']) || 0) - (Number(row['成本']) || 0),
+          
+          expectedStartDate: parseDate(row['施工時間']),
+          deliveryDate: parseDate(row['交車時間']),
+          expectedEndDate: parseDate(row['預計施工時間']),
+          checkupDate: parseDate(row['健檢時間']),
+          
+          posId: String(row['POS系統編號'] || ''),
         } as Customer;
       });
 

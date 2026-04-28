@@ -233,8 +233,13 @@ export const ArchiveEditForm: React.FC<ArchiveEditFormProps> = ({ customer, onSu
         </h3>
       </div>
       <div className="form-group col-span-12">
-        <label className="form-label">特殊備註</label>
-        <textarea name="notes" className="form-control" style={{ minHeight: '80px' }} value={formData.notes || ''} onChange={handleChange}></textarea>
+        <label className="form-label" style={{ color: '#ef4444', fontWeight: 'bold' }}>完工後待處理事項 (例如: 補貼、配件未裝...)</label>
+        <textarea name="pendingItems" className="form-control" style={{ minHeight: '60px', borderColor: '#fca5a5' }} placeholder="若有尚未完成的事項請記錄在此，列表將會顯示紅標提醒..." value={formData.pendingItems || ''} onChange={handleChange}></textarea>
+      </div>
+
+      <div className="form-group col-span-12">
+        <label className="form-label">特殊備註 (客情紀錄)</label>
+        <textarea name="notes" className="form-control" style={{ minHeight: '60px' }} value={formData.notes || ''} onChange={handleChange}></textarea>
       </div>
 
       <div className="form-actions col-span-12" style={{ marginTop: '24px' }}>

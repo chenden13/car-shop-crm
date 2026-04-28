@@ -51,20 +51,25 @@ export interface Customer {
   inCalendar?: boolean;
   mainService?: string;
   mainServiceBrand?: string;
-  expectedStartDate?: string;    // 預計施工日期
-  constructionTime?: string;     // 預計施工時間/進場時間
+  expectedStartDate?: string;    // 預計進場/留車日期
+  constructionTime?: string;     // 預計進場時間/留車時間
+  constructionStartDate?: string; // 預計施工日期
   expectedEndDate?: string;      // 預計交車日期
   expectedDeliveryTime?: string; // 預計交車時間
   materialOrdered?: boolean;
   
   windowTint?: string;
   windowTintBrand?: string;
+  windowTintScheduledTime?: string;
   digitalMirror?: string;
   digitalMirrorBrand?: string;
+  digitalMirrorScheduledTime?: string;
   electricMod?: string;
   electricModBrand?: string;
+  electricModScheduledTime?: string;
   
   customAccessories?: Accessory[];
+  accessoryScheduling?: { [key: string]: string };
   giftItems?: string[];
 
   // 財務資訊
@@ -98,6 +103,7 @@ export interface Customer {
   
   photosRetaken?: boolean;
   photosSent?: boolean;
+  pendingItems?: string; // 完工後待處理事項 (補貼、配件未裝等)
 }
 
 export interface CategorizedPhoto {
@@ -151,7 +157,17 @@ export interface PurchaseRecord {
   itemName: string;
   quantity: string;
   price: number;
-  status: 'ordered' | 'received';
+  status: 'ordered' | 'received' | 'pending' | 'arrival';
   notes?: string;
+  operator: string;
+}
+
+export interface FinanceRecord {
+  id: string;
+  date: string;
+  type: 'income' | 'expense';
+  category: string; // e.g. '施工收入', '膜料進貨', '耗材', '雜支'
+  amount: number;
+  description: string;
   operator: string;
 }

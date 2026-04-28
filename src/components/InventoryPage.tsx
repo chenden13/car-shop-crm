@@ -11,7 +11,7 @@ interface InventoryPageProps {
   inventoryLogs?: InventoryLog[];
   purchaseRecords?: PurchaseRecord[];
   userRole?: Role;
-  onUpdateInventory: (item: FilmInventory) => void;
+  onUpdateInventory: (item: FilmInventory, detailsOverride?: string) => void;
   onAddInventory: (item: FilmInventory) => void;
   onRemoveInventory: (id: string) => void;
   onAddPurchaseRecord: (record: PurchaseRecord) => void;
@@ -44,8 +44,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseForm, setPurchaseForm] = useState({
     itemName: '',
-    quantity: '',
-    price: '',
+    quantity: '1 捲',
     notes: '',
     orderDate: new Date().toISOString().split('T')[0]
   });
@@ -67,12 +66,27 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
         id: `INV-${Date.now()}`,
         brand: '',
         color: '',
-        size: '',
+        size: '1.52m x 15m',
+        currentMeters: 15, // 預設一捲約 15 米
         location: { zone, section, slot },
         lastUpdated: new Date().toISOString().split('T')[0]
       });
     }
     setIsEditModalOpen(true);
+  };
+
+  const handleAdjustMeters = (item: FilmInventory, amount: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    // 使用 Math.round(val * 100) / 100 處理浮點數精度，確保 CM 計算準確
+    const newMeters = Math.max(0, Math.round(((item.currentMeters || 0) + amount) * 100) / 100);
+    const action = amount > 0 ? '增加' : '使用';
+    
+    // 格式化細項，如果小於 1M 則顯示 CM
+    const absAmount = Math.abs(amount);
+    const amountStr = absAmount < 1 ? `${Math.round(absAmount * 100)}cm` : `${absAmount}M`;
+    
+    const details = `${action} ${item.brand} ${item.color} ${amountStr} (餘: ${newMeters}M)`;
+    onUpdateInventory({ ...item, currentMeters: newMeters, lastUpdated: new Date().toISOString().split('T')[0] }, details);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -82,7 +96,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
       if (isNew) {
         onAddInventory(editingItem as FilmInventory);
       } else {
-        onUpdateInventory(editingItem as FilmInventory);
+        onUpdateInventory({...(editingItem as FilmInventory), lastUpdated: new Date().toISOString().split('T')[0]});
       }
       setIsEditModalOpen(false);
       setEditingItem(null);
@@ -91,27 +105,29 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
 
   const handlePurchaseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('InventoryPage: 提交表單内容', purchaseForm);
     const newRecord: PurchaseRecord = {
       id: `PUR-${Date.now()}`,
       orderDate: purchaseForm.orderDate,
       itemName: purchaseForm.itemName,
       quantity: purchaseForm.quantity,
-      price: Number(purchaseForm.price) || 0,
+      price: 0,
       status: 'ordered',
       notes: purchaseForm.notes,
-      operator: '目前人員' // Simplified for now
+      operator: '系統成員'
     };
     onAddPurchaseRecord(newRecord);
     setIsPurchaseModalOpen(false);
     setPurchaseForm({
       itemName: '',
-      quantity: '',
-      price: '',
+      quantity: '1 捲',
       notes: '',
       orderDate: new Date().toISOString().split('T')[0]
     });
   };
 
+
+  console.log('InventoryPage Received PurchaseRecords:', purchaseRecords?.length);
 
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -168,7 +184,8 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
         )}
       </header>
 
-        {activeTab === 'storage' ? (
+      <div style={{ position: 'relative' }}>
+        {activeTab === 'storage' && (
           /* Original Storage View code */
           <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '24px' }}>
             <aside style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -230,7 +247,8 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
                         borderColor: item ? 'var(--primary)' : '#e2e8f0',
                         background: item ? '#eff6ff' : '#fff',
                         padding: '12px 20px', cursor: 'pointer', transition: 'all 0.2s',
-                        boxShadow: item ? '0 2px 4px rgba(59, 130, 246, 0.05)' : 'none'
+                        boxShadow: item ? '0 2px 4px rgba(59, 130, 246, 0.05)' : 'none',
+                        position: 'relative'
                       }}
                     >
                       <div style={{ width: '60px', fontWeight: '800', color: '#94a3b8', fontSize: '1rem' }}>
@@ -243,9 +261,41 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
                             <div style={{ fontWeight: 'bold', fontSize: '1.05rem', color: '#1e293b' }}>{item.color}</div>
                             <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{item.brand}</div>
                           </div>
-                          <div style={{ width: '150px', fontSize: '0.9rem', color: '#64748b' }}>
-                            <Layers size={14} style={{ marginRight: '4px' }} /> {item.size}
+                          
+                          {/* Meter adjustment controls */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '4px 10px', borderRadius: '25px', border: '1px solid #e2e8f0' }}>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                               <button 
+                                 onClick={(e) => handleAdjustMeters(item, -0.1, e)}
+                                 style={{ width: '35px', height: '18px', borderRadius: '4px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                 title="減少 10cm"
+                               >-0.1</button>
+                               <button 
+                                 onClick={(e) => handleAdjustMeters(item, -1, e)}
+                                 style={{ width: '35px', height: '18px', borderRadius: '4px', border: '1px solid #e2e8f0', background: '#fee2e2', color: '#dc2626', fontSize: '0.7rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                 title="減少 1M"
+                               >-1M</button>
+                             </div>
+
+                             <div style={{ minWidth: '50px', textAlign: 'center' }}>
+                               <div style={{ fontWeight: '800', color: 'var(--primary)', fontSize: '1rem' }}>{item.currentMeters || 0}</div>
+                               <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '-2px' }}>METERS</div>
+                             </div>
+
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                               <button 
+                                 onClick={(e) => handleAdjustMeters(item, 0.1, e)}
+                                 style={{ width: '35px', height: '18px', borderRadius: '4px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                 title="增加 10cm"
+                               >+0.1</button>
+                               <button 
+                                 onClick={(e) => handleAdjustMeters(item, 1, e)}
+                                 style={{ width: '35px', height: '18px', borderRadius: '4px', border: '1px solid #e2e8f0', background: '#ecfdf5', color: '#059669', fontSize: '0.7rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                 title="增加 1M"
+                               >+1M</button>
+                             </div>
                           </div>
+
                           <div style={{ width: '120px', fontSize: '0.8rem', color: '#94a3b8', textAlign: 'right' }}>
                             更新: {item.lastUpdated}
                           </div>
@@ -262,7 +312,9 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
               </div>
             </main>
           </div>
-        ) : activeTab === 'purchases' ? (
+        )}
+        
+        {activeTab === 'purchases' && (
           /* Purchase Records View */
           <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -275,25 +327,19 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
             </div>
 
             <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 2fr 1fr 1fr 1.5fr 100px', padding: '12px 20px', background: '#f8fafc', fontWeight: 'bold', fontSize: '0.8rem', color: '#64748b', borderBottom: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '120px 2fr 1fr 2fr', padding: '12px 20px', background: '#f8fafc', fontWeight: 'bold', fontSize: '0.8rem', color: '#64748b', borderBottom: '1px solid #e2e8f0' }}>
                 <div>叫貨日期</div>
                 <div>品項名稱 (膜料/配件)</div>
                 <div>數量</div>
-                <div>預估金額</div>
                 <div>備註</div>
-                <div>經辦人</div>
               </div>
               <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
                 {purchaseRecords.length > 0 ? purchaseRecords.map((rec, idx) => (
-                  <div key={rec.id} style={{ display: 'grid', gridTemplateColumns: '120px 2fr 1fr 1fr 1.5fr 100px', padding: '16px 20px', fontSize: '0.88rem', borderBottom: '1px solid #f1f5f9', alignItems: 'center', background: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
+                  <div key={rec.id} style={{ display: 'grid', gridTemplateColumns: '120px 2fr 1fr 2fr', padding: '16px 20px', fontSize: '0.88rem', borderBottom: '1px solid #f1f5f9', alignItems: 'center', background: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
                     <div style={{ color: '#64748b' }}>{rec.orderDate}</div>
                     <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{rec.itemName}</div>
                     <div>{rec.quantity}</div>
-                    <div style={{ color: 'var(--primary)', fontWeight: 'bold' }}>${(rec.price || 0).toLocaleString()}</div>
-                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{rec.notes || '-'}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#64748b' }}>
-                      <User size={12} /> {rec.operator}
-                    </div>
+                    <div style={{ color: '#64748b' }}>{rec.notes || '-'}</div>
                   </div>
                 )) : (
                   <div style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>尚無叫貨紀錄</div>
@@ -301,7 +347,9 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
               </div>
             </div>
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'history' && (
           /* History View */
           <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -334,6 +382,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
             </div>
           </div>
         )}
+      </div>
 
 
       {/* Purchase Modal */}
@@ -350,15 +399,9 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
                 <label className="form-label">品項名稱 (膜料廠牌色號 / 配件名稱)</label>
                 <input type="text" className="form-control" placeholder="例如: AX 亞光黑 1.52m x 15m" value={purchaseForm.itemName} onChange={e => setPurchaseForm({...purchaseForm, itemName: e.target.value})} required />
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="form-label">數量 (卷/個/套)</label>
-                  <input type="text" className="form-control" value={purchaseForm.quantity} onChange={e => setPurchaseForm({...purchaseForm, quantity: e.target.value})} required />
-                </div>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="form-label">預估金額</label>
-                  <input type="number" className="form-control" value={purchaseForm.price} onChange={e => setPurchaseForm({...purchaseForm, price: e.target.value})} />
-                </div>
+              <div className="form-group">
+                <label className="form-label">數量 (例如: 1 捲 / 5M / 2 個)</label>
+                <input type="text" className="form-control" value={purchaseForm.quantity} onChange={e => setPurchaseForm({...purchaseForm, quantity: e.target.value})} required />
               </div>
               <div className="form-group">
                 <label className="form-label">備註</label>
@@ -393,10 +436,18 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
                 <label className="form-label">顏色</label>
                 <input type="text" className="form-control" placeholder="冰川藍, 啞光黑..." value={editingItem?.color || ''} onChange={(e) => setEditingItem(prev => prev ? {...prev, color: e.target.value} : null)} required />
               </div>
-              <div className="form-group">
-                <label className="form-label">尺寸 (卷長)</label>
-                <input type="text" className="form-control" placeholder="1.52m x 15m" value={editingItem?.size || ''} onChange={(e) => setEditingItem(prev => prev ? {...prev, size: e.target.value} : null)} />
+              
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">目前長度 (公尺/M)</label>
+                  <input type="number" step="0.01" className="form-control" value={editingItem?.currentMeters || 0} onChange={(e) => setEditingItem(prev => prev ? {...prev, currentMeters: Number(e.target.value)} : null)} />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">完整尺寸規格</label>
+                  <input type="text" className="form-control" placeholder="1.52m x 15m" value={editingItem?.size || ''} onChange={(e) => setEditingItem(prev => prev ? {...prev, size: e.target.value} : null)} />
+                </div>
               </div>
+
               <div className="form-group">
                 <label className="form-label">備註</label>
                 <textarea className="form-control" style={{ minHeight: '80px' }} value={editingItem?.notes || ''} onChange={(e) => setEditingItem(prev => prev ? {...prev, notes: e.target.value} : null)} />

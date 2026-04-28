@@ -3,9 +3,10 @@ import type { Customer, Role } from '../types';
 
 import {
   Search, Car, User, Phone, Calendar, ShieldCheck,
-  ChevronDown, ChevronUp, Gift, Package, CheckCircle2, FileUp,
+  ChevronDown, ChevronUp, Gift, Package, CheckCircle2, FileUp, ListChecks,
   XCircle, FileText, Glasses, AlertCircle, Hash, Heart, Star, DollarSign,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, Save, Image as ImageIcon, Camera, Briefcase, MapPin, Activity, Scissors,
+  Smile, UserCheck, MessageSquare
 } from 'lucide-react';
 
 
@@ -76,8 +77,10 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       const name = String(c.name || '').toLowerCase();
       const phone = String(c.phone || '');
       const plate = String(c.plateNumber || '').toLowerCase();
+      const model = String(c.model || '').toLowerCase();
+      const film = String(c.filmColor || '').toLowerCase();
       const term = searchTerm.toLowerCase();
-      return name.includes(term) || phone.includes(term) || plate.includes(term);
+      return name.includes(term) || phone.includes(term) || plate.includes(term) || model.includes(term) || film.includes(term);
     })
     .sort((a, b) => {
       if (sortBy === 'id') {
@@ -172,6 +175,29 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
       </header>
 
+      {/* ── Table Header ── */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '70px 180px 180px 110px 110px 110px 1.5fr 50px', 
+        padding: '0 16px 12px', 
+        gap: '12px', 
+        borderBottom: '1px solid #e2e8f0',
+        marginBottom: '8px',
+        color: '#64748b',
+        fontSize: '0.75rem',
+        fontWeight: 'bold',
+        letterSpacing: '0.05em'
+      }}>
+        <div>編號</div>
+        <div>客戶資訊</div>
+        <div>車輛資訊</div>
+        <div>1.原本預約</div>
+        <div>2.完工交車</div>
+        <div>3.健檢提醒</div>
+        <div>膜料品牌與備註項目</div>
+        <div style={{ textAlign: 'right' }}>操作</div>
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {paginatedCustomers.length > 0 ? paginatedCustomers.map(customer => {
           const isExpanded = expandedId === customer.id;
@@ -180,236 +206,240 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
               {/* ── Summary Row ── */}
               <div
-                style={{ display: 'grid', gridTemplateColumns: 'minmax(150px, 1.5fr) 2fr 1fr 1fr 70px', alignItems: 'center', padding: '10px 16px', cursor: 'pointer', gap: '12px' }}
                 onClick={() => toggleExpand(customer.id)}
+                className="list-row"
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '70px 180px 180px 110px 110px 110px 1.5fr 50px',
+                  alignItems: 'center',
+                  padding: '16px',
+                  gap: '12px',
+                  background: isExpanded ? '#f0f9ff' : '#fff',
+                  borderRadius: '12px',
+                  border: '1px solid #f1f5f9',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: isExpanded ? '0 10px 25px -5px rgba(0,0,0,0.05)' : 'none'
+                }}
               >
-                {/* ID + Car */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ 
-                    background: '#64748b', 
-                    color: '#fff', 
-                    padding: '3px 8px', 
-                    borderRadius: '5px', 
-                    fontSize: '0.72rem', 
-                    fontWeight: 'bold', 
-                    flexShrink: 0,
-                    minWidth: '50px',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {String(customer.id).includes('無編號') ? '無編號' : customer.id}
-                  </div>
-
-                  <div style={{ background: 'var(--primary)', color: '#fff', padding: '5px', borderRadius: '6px', flexShrink: 0 }}><Car size={16} /></div>
-                  <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{customer.plateNumber}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{customer.brand} {customer.model}</div>
-                  </div>
-                </div>
-
-                {/* Service */}
-                <div style={{ background: '#f0fdf4', padding: '6px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#166534', fontWeight: 'bold', fontSize: '0.75rem', marginBottom: '2px' }}>
-                    <ShieldCheck size={12} /> 施工內容
-                  </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
-                    {customer.mainService || '未填'} {customer.mainServiceBrand ? `(${customer.mainServiceBrand})` : ''}
-                  </div>
-                  {customer.windowTint && <div style={{ fontSize: '0.7rem', color: '#64748b' }}>隔熱紙: {customer.windowTint}</div>}
-                </div>
-
-                {/* Customer */}
+                {/* 1. 編號 */}
+                <div style={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.8rem' }}>{customer.id || '—'}</div>
+                
+                {/* 2. 客戶資訊 */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600', fontSize: '0.85rem' }}><User size={12} color="#64748b" /> {customer.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: '#64748b' }}><Phone size={12} color="#94a3b8" /> {customer.phone}</div>
+                  <div style={{ fontWeight: '700', color: '#1e293b' }}>{customer.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{customer.phone}</div>
                 </div>
 
-                {/* Date */}
+                {/* 3. 車輛資訊 */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.75rem' }}><Calendar size={12} /> 施工日期</div>
-                  <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{customer.expectedStartDate || '未定'}</div>
+                  <div style={{ fontWeight: '700', color: '#1e293b' }}>{customer.plateNumber}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{customer.brand} {customer.model}</div>
                 </div>
 
-                {/* Expand button */}
+                {/* 4. 原本預約日期 */}
+                <div style={{ fontSize: '0.82rem', color: '#64748b' }}>{customer.expectedStartDate || '—'}</div>
+
+                {/* 5. 實際完工日期 */}
+                <div style={{ fontSize: '0.85rem', color: '#ec4899', fontWeight: '800' }}>{customer.deliveryDate || '—'}</div>
+
+                {/* 6. 健檢提醒日期 */}
+                <div style={{ fontSize: '0.82rem', color: '#3b82f6', fontWeight: '700' }}>{customer.checkupDate || '—'}</div>
+
+                {/* 7. 施工項目與備註 */}
+                <div style={{ paddingRight: '20px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+                    {customer.mainServiceBrand} - {customer.filmColor}
+                  </div>
+                  {customer.notes && <div className="text-truncate" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{customer.notes}</div>}
+                </div>
+
+                {/* 8. 操作 */}
                 <div style={{ textAlign: 'right' }}>
-                  <button
-                    className="btn btn-outline"
-                    style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', background: isExpanded ? '#eff6ff' : '', borderColor: isExpanded ? '#bfdbfe' : '' }}
-                  >
-                    明細 {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  </button>
+                  {isExpanded ? <ChevronUp size={24} color="var(--primary)" /> : <ChevronDown size={24} color="#cbd5e1" />}
                 </div>
               </div>
 
               {/* ── Expanded Detail Panel ── */}
               {isExpanded && (
-                <div style={{ padding: '0 20px 20px', borderTop: '1px solid #eff6ff', background: '#fafcff' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', paddingTop: '20px' }}>
+                <div style={{ padding: '0 24px 24px', borderTop: '2px solid #eff6ff', background: '#fafcff' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '32px', paddingTop: '24px' }}>
 
-                    {/* Col 1: 施工項目 */}
-                    <div>
-                      <Section icon={<ShieldCheck size={13} />} title="施工訂購明細" color="#1d4ed8">
-                        <InfoRow label="主施工" value={customer.mainService} />
-                        <InfoRow label="品牌" value={customer.mainServiceBrand} />
-                        <InfoRow label="膜料顏色" value={customer.filmColor} />
-                        <InfoRow label="膜料貨號" value={customer.materialCode} />
-                        <InfoRow label="隔熱紙" value={customer.windowTint} />
-                        <InfoRow label="隔熱紙品牌" value={customer.windowTintBrand} />
-                        <InfoRow label="電子後視鏡" value={customer.digitalMirror} />
-                        <InfoRow label="電改" value={customer.electricMod} />
+                    {/* Col 1: 施工與項目 */}
+                    <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' }}>
+                      <Section icon={<ShieldCheck size={18} />} title="施工訂購明細" color="var(--primary)">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <InfoRow label="主施工項目" value={customer.mainService} />
+                          <InfoRow label="膜料顏色" value={customer.filmColor} />
+                          <InfoRow label="品牌/等級" value={customer.mainServiceBrand} />
+                          <InfoRow label="膜料貨號" value={customer.materialCode} />
+                        </div>
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
+                           <InfoRow label="隔熱紙項目" value={customer.windowTint} />
+                           {customer.windowTintBrand && <InfoRow label="隔熱紙品牌" value={customer.windowTintBrand} />}
+                           <InfoRow label="電子後視鏡" value={customer.digitalMirror} />
+                           <InfoRow label="電改項目" value={customer.electricMod} />
+                        </div>
                       </Section>
 
+                      {/* 施工過程檢核表 */}
+                      <div style={{ marginTop: '20px' }}>
+                        <Section icon={<ListChecks size={18} />} title="施工過程檢核 (標準 24 項)" color="#16a34a">
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
+                            {(customer.constructionChecklist || []).length > 0 ? customer.constructionChecklist?.map(item => (
+                              <div key={item.id} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', color: item.checked ? '#166534' : '#64748b' }}>
+                                {item.checked ? <CheckCircle2 size={12} color="#16a34a" /> : <Clock size={12} color="#cbd5e1" />}
+                                <span style={{ fontWeight: item.checked ? '700' : '500' }}>{item.name}</span>
+                              </div>
+                            )) : <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>無檢核紀錄</div>}
+                          </div>
+                        </Section>
+                      </div>
 
                       {customer.customAccessories && customer.customAccessories.length > 0 && (
-                        <Section icon={<Package size={13} />} title="客製配件" color="#7c3aed">
-                          {customer.customAccessories.map(acc => (
-                            <InfoRow key={acc.id} label={acc.name} value={acc.price ? `$${acc.price.toLocaleString()}` : '—'} />
-                          ))}
-                        </Section>
+                        <div style={{ marginTop: '20px' }}>
+                          <Section icon={<Package size={18} />} title="加裝配件" color="#6366f1">
+                            {customer.customAccessories.map(acc => (
+                              <InfoRow key={acc.id} label={acc.name} value={acc.price ? `$ ${acc.price.toLocaleString()}` : '—'} />
+                            ))}
+                          </Section>
+                        </div>
                       )}
 
                       {customer.giftItems && customer.giftItems.length > 0 && (
-                        <Section icon={<Gift size={13} />} title="贈送項目" color="#b45309">
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                            {customer.giftItems.map(g => (
-                              <span key={g} style={{ padding: '2px 8px', borderRadius: '12px', background: '#fef3c7', color: '#92400e', fontSize: '0.72rem', fontWeight: '600', border: '1px solid #fde68a' }}>{g}</span>
-                            ))}
+                        <div style={{ marginTop: '20px' }}>
+                          <Section icon={<Gift size={18} />} title="贈送與優惠" color="#f59e0b">
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {customer.giftItems.map(g => (
+                                <span key={g} style={{ padding: '4px 12px', borderRadius: '20px', background: '#fffbeb', color: '#92400e', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid #fde68a' }}>{g}</span>
+                              ))}
+                            </div>
+                          </Section>
+                        </div>
+                      )}
+
+                      {/* 客戶習性與特徵 (新增) */}
+                      <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '2px solid #f1f5f9' }}>
+                        <Section icon={<UserCheck size={18} />} title="完整客戶習性觀察" color="#ec4899">
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <InfoRow label="告知管道" value={customer.fromChannel} />
+                            <InfoRow label="工作地點" value={customer.location} />
+                            <InfoRow label="職業" value={customer.occupation} />
+                            <InfoRow label="興趣" value={customer.hobbies} />
+                            <InfoRow label="同行狀態" value={customer.companion ? companions[customer.companion] : ''} />
+                            <InfoRow label="性格屬性" value={customer.personality === 'introvert' ? '內向' : customer.personality === 'extrovert' ? '外向' : ''} />
+                            <InfoRow label="經濟預算" value={customer.wealthLevel === 'high' ? '非常有錢' : customer.wealthLevel === 'medium' ? '中產家庭' : customer.wealthLevel === 'normal' ? '一般小資' : ''} />
+                            <InfoRow label="方便聯絡" value={customer.convenientTime === 'weekday' ? '平日' : customer.convenientTime === 'weekend' ? '假日' : ''} />
+                            <InfoRow label="體型外觀" value={customer.bodyType === 'slim' ? '瘦' : customer.bodyType === 'average' ? '中等' : customer.bodyType === 'heavy' ? '偏胖' : ''} />
+                            <InfoRow label="髮型長度" value={customer.hairLength === 'short' ? '短髮' : customer.hairLength === 'medium' ? '中長' : customer.hairLength === 'long' ? '長髮' : ''} />
+                          </div>
+                          <div style={{ display: 'flex', gap: '15px', marginTop: '12px', background: '#fff1f2', padding: '8px 12px', borderRadius: '8px' }}>
+                            {customer.detailOriented && <span style={{ fontSize: '0.75rem', color: '#be123c', fontWeight: 'bold' }}>#在意細節</span>}
+                            {customer.easyGoing && <span style={{ fontSize: '0.75rem', color: '#be123c', fontWeight: 'bold' }}>#好相處</span>}
+                            {customer.likesCalls && <span style={{ fontSize: '0.75rem', color: '#be123c', fontWeight: 'bold' }}>#喜歡電話</span>}
+                            {customer.wearsGlasses && <span style={{ fontSize: '0.75rem', color: '#be123c', fontWeight: 'bold' }}>#戴眼鏡</span>}
                           </div>
                         </Section>
-                      )}
+                      </div>
                     </div>
 
-                    {/* Col 2: 售後關懷 */}
-                    <div>
-                      <Section icon={<CheckCircle2 size={13} />} title="售後關懷狀態" color="#047857">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                          <ToggleBadge ok={customer.giftGiven} label="大禮包發送" onToggle={() => toggle(customer, 'giftGiven')} />
-                          <ToggleBadge ok={customer.formSent} label="表單發送" onToggle={() => toggle(customer, 'formSent')} />
-                          <ToggleBadge ok={customer.formFilled} label="表單填寫" onToggle={() => toggle(customer, 'formFilled')} />
-                          <ToggleBadge ok={customer.quoteCreated} label="報價單已建立" onToggle={() => toggle(customer, 'quoteCreated')} />
+                    {/* Col 2: 售後追蹤與照片 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                        <Section icon={<CheckCircle2 size={18} />} title="售後與交付狀態" color="#10b981">
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                            <ToggleBadge ok={customer.giftGiven} label="大禮包交付" onToggle={() => toggle(customer, 'giftGiven')} />
+                            <ToggleBadge ok={customer.formSent} label="表單發送" onToggle={() => toggle(customer, 'formSent')} />
+                            <ToggleBadge ok={customer.photosSent} label="完工照傳送" onToggle={() => toggle(customer, 'photosSent')} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                             <ToggleBadge ok={customer.followUp3Days} label="3天初探關心" onToggle={() => toggle(customer, 'followUp3Days')} />
+                             <ToggleBadge ok={customer.followUp2Weeks} label="2週穏定度追蹤" onToggle={() => toggle(customer, 'followUp2Weeks')} />
+                             <ToggleBadge ok={customer.followUp6Months} label="6個月健檢提醒" onToggle={() => toggle(customer, 'followUp6Months')} />
+                             <ToggleBadge ok={customer.followUp1Year} label="1年活動邀約" onToggle={() => toggle(customer, 'followUp1Year')} />
+                          </div>
+                        </Section>
+                      </div>
+
+                      {/* 施工照片區 (新增) */}
+                      <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                        <Section icon={<Camera size={18} />} title="車體受損/原樣紀錄" color="#f59e0b">
+                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px' }}>
+                             {(customer.damagePhotos || []).length > 0 ? customer.damagePhotos?.map((p, i) => (
+                               <div key={i} style={{ position: 'relative' }}>
+                                 <img src={p.url} alt="damage" style={{ width: '100%', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'zoom-in' }} onClick={() => window.open(p.url)} />
+                                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '10px', textAlign: 'center', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px' }}>{p.category}</div>
+                               </div>
+                             )) : <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>無影像紀錄</div>}
+                           </div>
+                        </Section>
+                        <div style={{ marginTop: '20px' }}>
+                           <Section icon={<ImageIcon size={18} />} title="施工與完工美照" color="#3b82f6">
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px' }}>
+                                {(customer.progressPhotos || []).length > 0 ? customer.progressPhotos?.map((p, i) => (
+                                  <div key={i} style={{ position: 'relative' }}>
+                                    <img src={p.url} alt="progress" style={{ width: '100%', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'zoom-in' }} onClick={() => window.open(p.url)} />
+                                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '10px', textAlign: 'center', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px' }}>{p.category}</div>
+                                  </div>
+                                )) : <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>無影像紀錄</div>}
+                              </div>
+                           </Section>
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          <ToggleBadge ok={customer.followUp3Days} label="3天追蹤" onToggle={() => toggle(customer, 'followUp3Days')} />
-                          <ToggleBadge ok={customer.followUp2Weeks} label="2週追蹤" onToggle={() => toggle(customer, 'followUp2Weeks')} />
-                          <ToggleBadge ok={customer.followUp6Months} label="6個月追蹤" onToggle={() => toggle(customer, 'followUp6Months')} />
-                          <ToggleBadge ok={customer.followUp1Year} label="1年追蹤" onToggle={() => toggle(customer, 'followUp1Year')} />
+                      </div>
+                    </div>
+
+                    {/* Col 3: 財務與備註 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                       {customer.pendingItems && (
+                        <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '12px', border: '2px solid #fca5a5' }}>
+                          <Section icon={<AlertCircle size={18} />} title="待辦事項 (追蹤中)" color="#ef4444">
+                            <div style={{ fontSize: '0.9rem', color: '#991b1b', fontWeight: 'bold', lineHeight: 1.5 }}>
+                              {customer.pendingItems}
+                            </div>
+                          </Section>
                         </div>
-                      </Section>
+                      )}
 
-
-                      <Section icon={<Calendar size={13} />} title="日期紀錄" color="#0369a1">
-                        <InfoRow label="交車日期" value={customer.deliveryDate} />
-                        <InfoRow label="回廠檢查" value={customer.checkupDate} />
-                        <InfoRow label="預計施工" value={customer.expectedStartDate} />
-                      </Section>
-
-                      {userRole === 'admin' && (
-                        <Section icon={<DollarSign size={13} />} title="財務數據" color="#059669">
-                          <InfoRow label="金額" value={customer.totalAmount ? `$${customer.totalAmount.toLocaleString()}` : undefined} />
-                          <InfoRow label="成本" value={customer.cost ? `$${customer.cost.toLocaleString()}` : undefined} />
-                          <InfoRow label="收益" value={customer.revenue ? `$${customer.revenue.toLocaleString()}` : undefined} />
+                      <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                        <Section icon={<DollarSign size={18} />} title="帳務資訊" color="#059669">
+                          <InfoRow label="總成交金額" value={customer.totalAmount ? `$ ${customer.totalAmount.toLocaleString()}` : '—'} />
+                          {userRole === 'admin' && <InfoRow label="成本支出" value={customer.cost ? `$ ${customer.cost.toLocaleString()}` : '—'} />}
                           {customer.appliedDiscountName && (
-                            <div style={{ marginTop: '8px', padding: '6px 10px', background: '#fff5f7', border: '1px solid #fbcfe8', borderRadius: '8px', fontSize: '0.75rem', color: '#be185d' }}>
-                              <Star size={12} style={{ marginRight: '4px' }} /> {customer.appliedDiscountName}
-                              <span style={{ float: 'right', fontWeight: 'bold' }}>- ${customer.discountAmount?.toLocaleString()}</span>
+                            <div style={{ marginTop: '10px', padding: '10px', background: '#fdf2f8', borderRadius: '8px', fontSize: '0.8rem', color: '#be185d', fontWeight: '600' }}>
+                              套用優惠: {customer.appliedDiscountName}
                             </div>
                           )}
                         </Section>
-                      )}
-                      
-                      {/* If employee, only show Amount (Price) and Discount but not Cost/Revenue */}
-                      {userRole === 'employee' && (
-                        <Section icon={<DollarSign size={13} />} title="財務金額" color="#059669">
-                          <InfoRow label="報價金額" value={customer.totalAmount ? `$${customer.totalAmount.toLocaleString()}` : undefined} />
-                          {customer.appliedDiscountName && (
-                             <div style={{ marginTop: '8px', padding: '6px 10px', background: '#fff5f7', border: '1px solid #fbcfe8', borderRadius: '8px', fontSize: '0.75rem', color: '#be185d' }}>
-                               <Star size={12} style={{ marginRight: '4px' }} /> {customer.appliedDiscountName}
-                               <span style={{ float: 'right', fontWeight: 'bold' }}>折扣: - ${customer.discountAmount?.toLocaleString()}</span>
-                             </div>
-                          )}
-                        </Section>
-                      )}
-
-
-
-
-                      <Section icon={<FileText size={13} />} title="照片與複拍" color="#6d28d9">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          <ToggleBadge ok={customer.photosRetaken} label="照片重拍" onToggle={() => toggle(customer, 'photosRetaken')} />
-                          <ToggleBadge ok={customer.photosSent} label="照片發送" onToggle={() => toggle(customer, 'photosSent')} />
-                        </div>
-                      </Section>
-
-
-                      {customer.notes && (
-                        <Section icon={<AlertCircle size={13} />} title="特殊備註" color="#dc2626">
-                          <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 12px', fontSize: '0.82rem', color: '#7f1d1d', lineHeight: 1.6 }}>
-                            {customer.notes}
-                          </div>
-                        </Section>
-                      )}
-                    </div>
-
-                    {/* Col 3: 客人特色 */}
-                    <div>
-                      <Section icon={<Star size={13} />} title="客戶特色" color="#b45309">
-                        <InfoRow label="方便時間" value={customer.convenientTime === 'weekday' ? '平日' : customer.convenientTime === 'weekend' ? '假日' : undefined} />
-                        <InfoRow label="同行者" value={customer.companion ? companions[customer.companion] : undefined} />
-                        <InfoRow label="職業" value={customer.occupation} />
-                        <InfoRow label="興趣" value={customer.hobbies} />
-                        <InfoRow label="地區" value={customer.location} />
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '6px' }}>
-                          {customer.detailOriented && <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.72rem', border: '1px solid #bfdbfe' }}>在意細節</span>}
-                          {customer.easyGoing && <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#f0fdf4', color: '#166534', fontSize: '0.72rem', border: '1px solid #bbf7d0' }}>好相處</span>}
-                          {customer.likesCalls && <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#fef3c7', color: '#92400e', fontSize: '0.72rem', border: '1px solid #fde68a' }}>喜歡電話</span>}
-                          {customer.wealthLevel === 'high' && <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#fdf4ff', color: '#7e22ce', fontSize: '0.72rem', border: '1px solid #e9d5ff' }}>高消費力</span>}
-                        </div>
-                      </Section>
-
-                      <Section icon={<Glasses size={13} />} title="外觀特徵" color="#475569">
-                        <InfoRow label="體型" value={customer.bodyType === 'slim' ? '纖細' : customer.bodyType === 'average' ? '中等' : customer.bodyType === 'heavy' ? '豐腴' : undefined} />
-                        <InfoRow label="眼鏡" value={customer.wearsGlasses ? '有戴眼鏡' : undefined} />
-                        <InfoRow label="髮長" value={customer.hairLength === 'short' ? '短髮' : customer.hairLength === 'medium' ? '中髮' : customer.hairLength === 'long' ? '長髮' : undefined} />
-                        <InfoRow label="個性" value={customer.personality === 'introvert' ? '內斂' : customer.personality === 'extrovert' ? '外向開朗' : undefined} />
-                        {customer.childAge && <InfoRow label="小孩年齡" value={`${customer.childAge} 歲`} />}
-                      </Section>
-
-                      {customer.fromChannel && (
-                        <Section icon={<Hash size={13} />} title="來源管道" color="#0891b2">
-                          <InfoRow label="來源" value={customer.fromChannel} />
-                        </Section>
-                      )}
-
-                      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); onEdit(customer); }} 
-                          className="btn btn-outline" 
-                          style={{ borderColor: '#3b82f6', color: '#1d4ed8', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        >
-                          <FileText size={14} /> 編輯微調內容
-                        </button>
                       </div>
+
+                      <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                        <Section icon={<FileText size={18} />} title="最後結案備註" color="#475569">
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                             {customer.notes || '無相關客戶習性記錄'}
+                          </p>
+                        </Section>
+                      </div>
+
+                      <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                        <Section icon={<Calendar size={18} />} title="關鍵日期紀錄" color="#3b82f6">
+                          <InfoRow label="完工交車日期" value={customer.deliveryDate} />
+                          <InfoRow label="下次檢查/回廠" value={customer.checkupDate} />
+                          <InfoRow label="原本施工日期" value={customer.expectedStartDate} />
+                        </Section>
+                      </div>
+
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onEdit(customer); }} 
+                        className="btn btn-primary" 
+                        style={{ width: '100%', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' }}
+                      >
+                        <Save size={18} /> 編輯檔案 / 修改日期
+                      </button>
                     </div>
                   </div>
-
-
-                  {/* Photos section */}
-                  {customer.progressPhotos && customer.progressPhotos.length > 0 && (
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Heart size={13} /> 施工紀錄照片
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {customer.progressPhotos.map((photo, idx) => (
-                          <div key={idx} style={{ background: '#f1f5f9', borderRadius: '6px', padding: '4px 8px', fontSize: '0.72rem', color: '#475569' }}>
-                            📷 {photo.category}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
+
             </div>
           );
         }) : (
