@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, UserPlus, Car, Tag, Clock, User, Phone, Calendar, ChevronRight, Plus } from 'lucide-react';
-import type { Customer, StatusType, Role } from '../types';
+import { Search, UserPlus, Calendar, ChevronRight, Plus } from 'lucide-react';
+import type { Customer, Role } from '../types';
 
 interface InquiryPageProps {
   customers: Customer[];

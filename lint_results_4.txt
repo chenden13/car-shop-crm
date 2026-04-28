@@ -1,0 +1,72 @@
+
+> HouseWrapper-CRM@0.0.0 lint
+> eslint .
+
+
+C:\car-shop-projects\car-shop-crm\src\App.tsx
+   65:21  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   91:10  error  'isPreviewModalOpen' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  107:9   error  'handleOpenNewModal' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  193:19  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  216:19  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  243:19  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  259:19  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\car-shop-projects\car-shop-crm\src\components\CompletedForm.tsx
+  120:215  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\car-shop-projects\car-shop-crm\src\components\ConstructionForm.tsx
+   4:73  error    'Loader2' is defined but never used                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  19:10  error    'isUploading' is assigned a value but never used                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  67:6   warning  React Hook useEffect has missing dependencies: 'formData.constructionChecklist', 'formData.customAccessories', 'formData.digitalMirror', 'formData.electricMod', 'formData.giftItems', 'formData.mainService', and 'formData.windowTint'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\car-shop-projects\car-shop-crm\src\components\ExcelImport.tsx
+   4:35  error  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  43:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\car-shop-projects\car-shop-crm\src\components\InquiryPage.tsx
+  12:86  error  'userRole' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\car-shop-projects\car-shop-crm\src\components\InventoryPage.tsx
+   2:30  error  'StorageLocation' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   4:3   error  'Package' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   4:12  error  'Search' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   5:8   error  'Layers' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   5:27  error  'Info' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   6:58  error  'User' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  66:20  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\car-shop-projects\car-shop-crm\src\components\InventoryPage.tsx:66:20
+  64 |     } else {
+  65 |       setEditingItem({
+> 66 |         id: `INV-${Date.now()}`,
+     |                    ^^^^^^^^^^ Cannot call impure function
+  67 |         brand: '',
+  68 |         color: '',
+  69 |         size: '1.52m x 15m',  react-hooks/purity
+
+C:\car-shop-projects\car-shop-crm\src\components\PendingEditForm.tsx
+    5:30   error  'Smile' is defined but never used         @typescript-eslint/no-unused-vars
+    6:20   error  'ImageIcon' is defined but never used     @typescript-eslint/no-unused-vars
+    6:44   error  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+    6:58   error  'Save' is defined but never used          @typescript-eslint/no-unused-vars
+  490:127  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  566:122  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\car-shop-projects\car-shop-crm\src\components\PendingExcelImport.tsx
+  41:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\car-shop-projects\car-shop-crm\src\lib\api.ts
+   80:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 36 problems (35 errors, 1 warning)
+

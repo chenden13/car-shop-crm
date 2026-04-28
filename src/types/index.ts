@@ -23,6 +23,7 @@ export interface Customer {
   plateNumber: string;
   brand?: string;
   model?: string;
+  vehicleSize?: string; // S, M, L, XL, etc.
   
   // 客戶特徵
   convenientTime?: 'weekday' | 'weekend';
@@ -60,13 +61,21 @@ export interface Customer {
   
   windowTint?: string;
   windowTintBrand?: string;
+  windowTintPrice?: number;
+  hasSunroof?: boolean;
   windowTintScheduledTime?: string;
+  windowTintDate?: string;
   digitalMirror?: string;
   digitalMirrorBrand?: string;
+  digitalMirrorPrice?: number;
   digitalMirrorScheduledTime?: string;
+  digitalMirrorDate?: string;
   electricMod?: string;
   electricModBrand?: string;
+  electricModPrice?: number;
   electricModScheduledTime?: string;
+  electricModDate?: string;
+  mainServicePrice?: number;
   
   customAccessories?: Accessory[];
   accessoryScheduling?: { [key: string]: string };
@@ -85,6 +94,7 @@ export interface Customer {
 
   
   // 施工中
+  videoUrl?: string;           // 施工前巡車影片連結 (YouTube)
   constructionChecklist?: ChecklistItem[];
   damagePhotos?: CategorizedPhoto[]; 
   progressPhotos?: CategorizedPhoto[]; 
@@ -104,6 +114,10 @@ export interface Customer {
   photosRetaken?: boolean;
   photosSent?: boolean;
   pendingItems?: string; // 完工後待處理事項 (補貼、配件未裝等)
+  communicationStyle?: string;
+  workHoursAsked?: string;
+  characteristic?: string;
+  constructionDetails?: string;
 }
 
 export interface CategorizedPhoto {
@@ -170,4 +184,5 @@ export interface FinanceRecord {
   amount: number;
   description: string;
   operator: string;
+  settlementId?: string; // 已結算對應的 ID
 }

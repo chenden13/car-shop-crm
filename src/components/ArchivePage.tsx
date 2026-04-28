@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import type { Customer, Role } from '../types';
 
 import {
-  Search, Car, User, Phone, Calendar, ShieldCheck,
+  Search, Calendar, ShieldCheck,
   ChevronDown, ChevronUp, Gift, Package, CheckCircle2, FileUp, ListChecks,
-  XCircle, FileText, Glasses, AlertCircle, Hash, Heart, Star, DollarSign,
-  ArrowUp, ArrowDown, Save, Image as ImageIcon, Camera, Briefcase, MapPin, Activity, Scissors,
-  Smile, UserCheck, MessageSquare
+  XCircle, FileText, AlertCircle, Hash, DollarSign,
+  ArrowUp, ArrowDown, Save, Image as ImageIcon, Camera, UserCheck, Clock
 } from 'lucide-react';
 
 
@@ -61,7 +60,7 @@ const Section = ({ icon, title, children, color = '#64748b' }: { icon: React.Rea
 );
 
 export const ArchivePage: React.FC<ArchivePageProps> = ({ 
-  customers, onBack, onUpdate, onEdit, onViewDetail, userRole, onImportClick
+  customers, onBack, onUpdate, onEdit, userRole, onImportClick
 }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,12 +74,23 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
   const filteredCustomers = completedCustomers
     .filter(c => {
       const name = String(c.name || '').toLowerCase();
-      const phone = String(c.phone || '');
+      const phone = String(c.phone || '').toLowerCase();
       const plate = String(c.plateNumber || '').toLowerCase();
       const model = String(c.model || '').toLowerCase();
       const film = String(c.filmColor || '').toLowerCase();
+      const brand = String(c.brand || '').toLowerCase();
+      const posId = String(c.posId || '').toLowerCase();
+      const notes = String(c.notes || '').toLowerCase();
       const term = searchTerm.toLowerCase();
-      return name.includes(term) || phone.includes(term) || plate.includes(term) || model.includes(term) || film.includes(term);
+
+      return name.includes(term) || 
+             phone.includes(term) || 
+             plate.includes(term) || 
+             model.includes(term) || 
+             film.includes(term) || 
+             brand.includes(term) || 
+             posId.includes(term) || 
+             notes.includes(term);
     })
     .sort((a, b) => {
       if (sortBy === 'id') {
@@ -223,7 +233,9 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
                 }}
               >
                 {/* 1. 編號 */}
-                <div style={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.8rem' }}>{customer.id || '—'}</div>
+                <div style={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.8rem' }}>
+                  {String(customer.id).startsWith('c_') && String(customer.id).length > 10 ? '-' : (customer.id || '—')}
+                </div>
                 
                 {/* 2. 客戶資訊 */}
                 <div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Hammer, Calendar, Clock, ChevronRight, CheckCircle, Package, Settings, Camera, Image as ImageIcon } from 'lucide-react';
+import { Search, Hammer, Settings, Camera, Image as ImageIcon } from 'lucide-react';
 import type { Customer } from '../types';
 
 interface ActiveConstructionPageProps {
@@ -27,7 +27,7 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
   });
 
   return (
-    <div style={{ padding: '0 20px 40px 20px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '0 20px 40px 20px', maxWidth: '1500px', margin: '0 auto' }}>
       <header style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -41,7 +41,7 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
             <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
             <input
               type="text"
-              placeholder="搜尋編號、車牌..."
+              placeholder="搜尋車主、車牌..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="glass-panel"
@@ -51,11 +51,11 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
         </div>
       </header>
 
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden', minWidth: '1100px', border: '1px solid var(--border-light)' }}>
+      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden', minWidth: '1200px', border: '1px solid var(--border-light)' }}>
         {/* Table Header */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: '150px 180px 1.5fr 2fr 60px',
+          gridTemplateColumns: '140px 140px 1.5fr 1.5fr 360px 60px',
           padding: '18px 25px',
           background: 'var(--primary)',
           fontWeight: 'bold',
@@ -63,23 +63,24 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
           fontSize: '0.85rem',
           letterSpacing: '0.5px'
         }}>
-          <div>車主 / 車牌</div>
-          <div>施工時程狀態</div>
-          <div>施工項目與膜料</div>
-          <div>詳細配置 (配置/加裝)</div>
+          <div>車牌 / 車主</div>
+          <div>品牌 / 車型</div>
+          <div>膜料施工內容</div>
+          <div>加裝配件與贈品</div>
+          <div>施工進度時程</div>
           <div style={{ textAlign: 'center' }}>操作</div>
         </div>
 
         {/* Table Body */}
         <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
-          {sorted.length > 0 ? sorted.map((customer, idx) => {
+          {sorted.length > 0 ? sorted.map((customer) => {
             return (
               <div 
                 key={customer.id} 
                 className="list-row"
                 style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: '150px 180px 1.5fr 2fr 60px',
+                  gridTemplateColumns: '140px 140px 1.5fr 1.5fr 360px 60px',
                   alignItems: 'center',
                   padding: '20px 25px',
                   borderBottom: '1px solid #f1f5f9',
@@ -87,112 +88,78 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
                   background: '#fff'
                 }}
               >
-                {/* 1. 車主 / 車牌 */}
+                {/* 1. 車牌 / 車主 */}
                 <div>
                   <div style={{ fontWeight: '900', color: '#1e293b', fontSize: '1.1rem' }}>{customer.plateNumber}</div>
                   <div style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 'bold' }}>{customer.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{customer.model}</div>
                 </div>
 
-                {/* 2. 施工時程狀態 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ background: '#f0f9ff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#0369a1', fontWeight: 'bold' }}>進場/留車</div>
-                    <div style={{ fontSize: '0.82rem', color: '#0c4a6e', fontWeight: '800' }}>{customer.expectedStartDate} {customer.constructionTime}</div>
-                  </div>
-                  <div style={{ background: '#f0fdf4', padding: '4px 8px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 'bold' }}>預計施工</div>
-                    <div style={{ fontSize: '0.82rem', color: '#064e3b', fontWeight: '800' }}>{customer.constructionStartDate || '-'}</div>
-                  </div>
-                  <div style={{ background: '#fdf2f8', padding: '4px 8px', borderRadius: '6px', border: '1px solid #fbcfe8' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#be185d', fontWeight: 'bold' }}>預計完工</div>
-                    <div style={{ fontSize: '0.82rem', color: '#831843', fontWeight: '800' }}>{customer.expectedEndDate} {customer.expectedDeliveryTime}</div>
-                  </div>
+                {/* 2. 品牌 / 車型 */}
+                <div>
+                  <div style={{ fontWeight: '700', color: '#0369a1' }}>{customer.brand || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#1e293b' }}>{customer.model || '—'}</div>
                 </div>
 
                 {/* 3. 施工項目與膜料 */}
-                <div style={{ paddingRight: '20px' }}>
-                  <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px' }}>主施工內容</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: '900', color: 'var(--primary)' }}>
+                <div style={{ paddingRight: '15px' }}>
+                  <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: '900', color: 'var(--primary)' }}>
                       {customer.mainServiceBrand} - {customer.filmColor}
                     </div>
-                    <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '2px' }}>{customer.mainService}</div>
-                    {customer.materialCode && (
-                       <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>貨號: {customer.materialCode}</div>
-                    )}
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>{customer.mainService}</div>
                   </div>
                 </div>
 
-                {/* 4. 詳細配置 (隔熱紙/電子鏡/加裝) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {customer.windowTint && (
-                      <div style={{ fontSize: '0.78rem', color: '#475569' }}>
-                        <span style={{ fontWeight: 'bold', color: '#0369a1' }}>隔熱紙:</span> {customer.windowTintBrand} {customer.windowTint}
-                        {customer.windowTintScheduledTime && (
-                           <span style={{ marginLeft: '6px', color: '#166534', fontWeight: '800', background: '#dcfce7', padding: '0 4px', borderRadius: '4px' }}>
-                             {customer.windowTintScheduledTime}
-                           </span>
-                        )}
-                      </div>
-                    )}
-                    {customer.digitalMirror && (
-                      <div style={{ fontSize: '0.78rem', color: '#475569' }}>
-                        <span style={{ fontWeight: 'bold', color: '#5b21b6' }}>電子鏡:</span> {customer.digitalMirrorBrand} {customer.digitalMirror}
-                        {customer.digitalMirrorScheduledTime && (
-                           <span style={{ marginLeft: '6px', color: '#166534', fontWeight: '800', background: '#dcfce7', padding: '0 4px', borderRadius: '4px' }}>
-                             {customer.digitalMirrorScheduledTime}
-                           </span>
-                        )}
-                      </div>
-                    )}
-                    {customer.electricMod && (
-                      <div style={{ fontSize: '0.78rem', color: '#475569' }}>
-                        <span style={{ fontWeight: 'bold', color: '#b91c1c' }}>電動件:</span> {customer.electricModBrand} {customer.electricMod}
-                        {customer.electricModScheduledTime && (
-                           <span style={{ marginLeft: '6px', color: '#166534', fontWeight: '800', background: '#dcfce7', padding: '0 4px', borderRadius: '4px' }}>
-                             {customer.electricModScheduledTime}
-                           </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {(customer.customAccessories || []).length > 0 && (
-                      <div style={{ fontSize: '0.78rem', color: '#334155' }}>
-                        <div style={{ fontWeight: 'bold', color: '#eab308' }}>客製加裝:</div>
-                        {customer.customAccessories?.map(a => (
-                          <div key={a.id} style={{ display: 'inline-block', marginRight: '5px' }}>
-                            {a.name}
-                            {(customer.accessoryScheduling || {})[a.id] && (
-                               <span style={{ color: '#166534', fontWeight: '800', marginLeft: '2px' }}>({(customer.accessoryScheduling || {})[a.id]})</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {(customer.giftItems || []).length > 0 && (
-                      <div style={{ fontSize: '0.78rem', color: '#334155' }}>
-                        <div style={{ fontWeight: 'bold', color: '#f97316' }}>贈送項目:</div>
-                        {customer.giftItems?.join(', ')}
-                      </div>
-                    )}
-                    
-                    {/* 照片紀錄小圖示 */}
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '6px', borderTop: '1px dashed #e2e8f0', paddingTop: '6px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Camera size={12} /> 受損: {(customer.damagePhotos || []).length}
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <ImageIcon size={12} /> 施工: {(customer.progressPhotos || []).length}
-                      </div>
+                {/* 4. 加裝配件 (隔熱紙/電子鏡/加裝/贈品) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '15px' }}>
+                  {customer.windowTint && (
+                    <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ padding: '2px 6px', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.7rem' }}>隔熱紙</span>
+                      {customer.windowTintBrand} {customer.windowTint}
                     </div>
+                  )}
+                  {customer.digitalMirror && (
+                    <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ padding: '2px 6px', background: '#f3e8ff', color: '#6b21a8', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.7rem' }}>電子鏡</span>
+                      {customer.digitalMirrorBrand} {customer.digitalMirror}
+                    </div>
+                  )}
+                  {customer.electricMod && (
+                    <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ padding: '2px 6px', background: '#fee2e2', color: '#991b1b', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.7rem' }}>電動件</span>
+                      {customer.electricModBrand} {customer.electricMod}
+                    </div>
+                  )}
+                  {(customer.customAccessories || []).length > 0 && (
+                    <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      <span style={{ padding: '2px 6px', background: '#fef9c3', color: '#854d0e', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.7rem' }}>加裝</span>
+                      {customer.customAccessories?.map(a => a.name).join(', ')}
+                    </div>
+                  )}
+                  {(!customer.windowTint && !customer.digitalMirror && !customer.electricMod && (customer.customAccessories || []).length === 0) && (
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>無額外加裝項目</div>
+                  )}
+                </div>
+
+                {/* 5. 施工時程狀態 */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                  <div style={{ background: '#f0f9ff', padding: '6px', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#0369a1', fontWeight: 'bold' }}>1.留車進場</div>
+                    <div style={{ fontSize: '0.8rem', color: '#0c4a6e', fontWeight: '800' }}>{customer.expectedStartDate?.slice(5)}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#0369a1' }}>{customer.constructionTime}</div>
+                  </div>
+                  <div style={{ background: '#f0fdf4', padding: '6px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#166534', fontWeight: 'bold' }}>2.開始施工</div>
+                    <div style={{ fontSize: '0.8rem', color: '#064e3b', fontWeight: '800' }}>{customer.constructionStartDate?.slice(5) || '-'}</div>
+                  </div>
+                  <div style={{ background: '#fdf2f8', padding: '6px', borderRadius: '8px', border: '1px solid #fbcfe8' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#be185d', fontWeight: 'bold' }}>3.預計交車</div>
+                    <div style={{ fontSize: '0.8rem', color: '#831843', fontWeight: '800' }}>{customer.expectedEndDate?.slice(5)}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#be185d' }}>{customer.expectedDeliveryTime}</div>
                   </div>
                 </div>
 
-                {/* 5. 操作 */}
+                {/* 6. 操作 */}
                 <div style={{ textAlign: 'center' }}>
                   <button 
                     onClick={() => onEditCustomer(customer)}

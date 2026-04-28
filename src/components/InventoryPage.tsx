@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import type { FilmInventory, StorageLocation, InventoryLog, Role, PurchaseRecord } from '../types';
+import type { FilmInventory, InventoryLog, Role, PurchaseRecord } from '../types';
 import { 
-  Package, Search, Plus, MapPin, Trash2, 
-  Box, Layers, Warehouse, Info, Clock, History as HistoryIcon,
-  ArrowUpRight, ArrowDownRight, RefreshCw, ShoppingCart, User
+  Plus, MapPin, Trash2, 
+  Box, Warehouse, Clock, History as HistoryIcon,
+  ArrowUpRight, ArrowDownRight, RefreshCw, ShoppingCart
 } from 'lucide-react';
 
 interface InventoryPageProps {

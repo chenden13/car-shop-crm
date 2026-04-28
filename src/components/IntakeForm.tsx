@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { taiwanCounties } from '../data/counties';
 import type { Customer } from '../types';
-import { X } from 'lucide-react';
+import { VehicleAutocomplete } from './VehicleAutocomplete';
 
 interface IntakeFormProps {
   onSuggestId: string;
+  vehicleMaster?: any[];
   onSubmit: (data: Customer) => void;
   onCancel: () => void;
 }
 
-export const IntakeForm: React.FC<IntakeFormProps> = ({ onSuggestId, onSubmit, onCancel }) => {
+export const IntakeForm: React.FC<IntakeFormProps> = ({ onSuggestId, vehicleMaster = [], onSubmit, onCancel }) => {
   const [formData, setFormData] = useState<Partial<Customer>>({
     id: onSuggestId,
     status: 'new',
@@ -72,17 +73,16 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSuggestId, onSubmit, o
       <h3 className="section-title" style={{ color: '#ef4444', marginTop: '20px' }}>車輛資訊</h3>
       
       <div className="form-group col-span-4">
-        <label className="form-label">車牌號碼*</label>
-        <input required type="text" name="plateNumber" className="form-control" placeholder="ABC-1234" value={formData.plateNumber || ''} onChange={handleChange} />
+        <label className="form-label">車牌號碼</label>
+        <input type="text" name="plateNumber" className="form-control" placeholder="ABC-1234" value={formData.plateNumber || ''} onChange={handleChange} />
       </div>
-      <div className="form-group col-span-4">
-        <label className="form-label">汽車品牌</label>
-        <input type="text" name="brand" className="form-control" placeholder="Porsche" value={formData.brand || ''} onChange={handleChange} />
-      </div>
-      <div className="form-group col-span-4">
-        <label className="form-label">車種 (Model)</label>
-        <input type="text" name="model" className="form-control" placeholder="911, Model Y..." value={formData.model || ''} onChange={handleChange} />
-      </div>
+      <VehicleAutocomplete 
+        brand={formData.brand || ''}
+        model={formData.model || ''}
+        vehicleSize={formData.vehicleSize || ''}
+        vehicleMaster={vehicleMaster}
+        onSelect={(data) => setFormData(prev => ({ ...prev, ...data }))}
+      />
 
       <h3 className="section-title" style={{ color: '#ef4444', marginTop: '20px' }}>諮詢需求與興趣</h3>
       

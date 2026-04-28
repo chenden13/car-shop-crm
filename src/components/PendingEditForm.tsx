@@ -2,11 +2,43 @@ import React, { useState } from 'react';
 import type { Customer, Accessory, StatusType } from '../types';
 import { 
   Plus, Trash2, Calendar, FileText, Settings, Gift, Package, 
-  CalendarCheck, User, Star, Smile, ChevronDown, ChevronUp, Clock,
-  Camera, Image as ImageIcon, AlertCircle, CheckCircle2, Save, Loader2
+  CalendarCheck, User, Star, ChevronDown, ChevronUp, Clock,
+  Camera, Car, Loader2, AlertCircle
 } from 'lucide-react';
+import { VehicleAutocomplete } from './VehicleAutocomplete';
 import { taiwanCounties } from '../data/counties';
 import { api } from '../lib/api';
+import { getYouTubeEmbedUrl } from '../lib/utils';
+
+const TINT_PRICE_TABLE: Record<string, { m3: number; m3_sunroof: number; my: number; my_sunroof: number }> = {
+  "極黑": { m3: 26500, m3_sunroof: 29500, my: 24500, my_sunroof: 32500 },
+  "極透": { m3: 32500, m3_sunroof: 36500, my: 30500, my_sunroof: 40500 },
+  "方案1: 前(透)後(黑)": { m3: 30500, m3_sunroof: 33500, my: 28500, my_sunroof: 36500 },
+  "方案2: 前、天(透) 身(黑)": { m3: 30500, m3_sunroof: 34500, my: 28500, my_sunroof: 38500 },
+  "XC MAX": { m3: 28500, m3_sunroof: 36500, my: 26500, my_sunroof: 34500 },
+  "Smart": { m3: 34500, m3_sunroof: 42500, my: 32500, my_sunroof: 40500 },
+  "方案3: 前(Smart)身、天(XC)": { m3: 32500, m3_sunroof: 40500, my: 28500, my_sunroof: 36500 },
+  "Vega": { m3: 22500, m3_sunroof: 25500, my: 20500, my_sunroof: 26500 },
+  "T4": { m3: 26500, m3_sunroof: 30500, my: 24500, my_sunroof: 31500 },
+  "方案4: 前(T4)身、天(Vega)": { m3: 24500, m3_sunroof: 27500, my: 22500, my_sunroof: 28500 },
+  "方案5: 前、天(T4) 身(Vega)": { m3: 24500, m3_sunroof: 28500, my: 22500, my_sunroof: 29500 },
+  "FSK 冰鑽 KT": { m3: 37500, m3_sunroof: 42500, my: 28500, my_sunroof: 40500 },
+  "舒熱佳 XE": { m3: 37500, m3_sunroof: 42500, my: 28500, my_sunroof: 40500 },
+  "量子膜 ZX": { m3: 35500, m3_sunroof: 42500, my: 28500, my_sunroof: 40500 },
+  "皇家 Supreme": { m3: 27500, m3_sunroof: 32500, my: 22500, my_sunroof: 32500 },
+  "Xpel-X2 Plus": { m3: 30500, m3_sunroof: 35500, my: 26500, my_sunroof: 37500 },
+};
+
+const TINT_GROUPS: Record<string, string[]> = {
+  "3M": ["極黑", "極透", "方案1: 前(透)後(黑)", "方案2: 前、天(透) 身(黑)"],
+  "桑馬克": ["XC MAX", "Smart", "方案3: 前(Smart)身、天(XC)"],
+  "T4 / Vega": ["Vega", "T4", "方案4: 前(T4)身、天(Vega)", "方案5: 前、天(T4) 身(Vega)"],
+  "FSK": ["FSK 冰鑽 KT"],
+  "舒熱佳": ["舒熱佳 XE"],
+  "量子膜": ["量子膜 ZX"],
+  "皇家": ["皇家 Supreme"],
+  "Xpel": ["Xpel-X2 Plus"]
+};
 
 const GIFT_OPTIONS = [
   '大燈', '日行燈', 'ABC柱', '握把',
@@ -15,14 +47,36 @@ const GIFT_OPTIONS = [
   '浮雕(視範圍)', '鋼琴烤漆(視範圍)'
 ];
 
+const PROMOTIONS = [
+  { id: 'none', label: '無優惠', type: 'none', val: 0 },
+  { id: '520-1', label: '520活動-1 (98折)', type: 'discount', val: 0.98 },
+  { id: '520-2', label: '520活動-2 (95折)', type: 'discount', val: 0.95 },
+  { id: '520-3', label: '520活動-3 (9折)', type: 'discount', val: 0.90 },
+  { id: '0520', label: '0520限定 (85折)', type: 'discount', val: 0.85 },
+  { id: 'front-wind', label: '迎風面方案 (贈玻璃/迎風鍍膜)', type: 'none', val: 0, note: '贈送迎風面鍍膜 玻璃鍍膜' },
+  { id: '3m', label: '3M限定 (-3000)', type: 'minus', val: 3000 },
+  { id: 'new-car', label: '新車優惠 (-2000)', type: 'minus', val: 2000 },
+  { id: 'sx-rhino', label: 'S/X限定 犀牛皮 (-10000)', type: 'minus', val: 10000 },
+  { id: 'sx-color', label: 'S/X限定 改色 (送迎風面)', type: 'none', val: 0, note: '送迎風面' },
+  { id: 'cross-month', label: '跨月施工 (贈兩項配件)', type: 'none', val: 0, note: '贈送兩項配件' },
+  { id: 'gift-pack', label: '萬元大禮包 (贈五項配件)', type: 'none', val: 0, note: '贈送五項配件' },
+  { id: 'unlock-car', label: '解鎖車種 前兩台 (95折)', type: 'discount', val: 0.95 },
+  { id: 'group-2-3', label: '團購-2~3人 (95折)', type: 'discount', val: 0.95 },
+  { id: 'group-4+', label: '團購-4人以上 (9折)', type: 'discount', val: 0.90 },
+  { id: 'other', label: '其他 (手動輸入)', type: 'custom', val: 0 },
+];
+
 interface PendingEditFormProps {
   customer?: Customer; 
   onSuggestId?: string;
+  vehicleMaster?: any[];
   onSubmit: (updatedCustomer: Customer, moveToConstruction: boolean) => void;
   onCancel: () => void;
 }
 
-export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSuggestId, onSubmit, onCancel }) => {
+export const PendingEditForm: React.FC<PendingEditFormProps> = ({ 
+  customer, onSuggestId, vehicleMaster = [], onSubmit, onCancel 
+}) => {
   const [formData, setFormData] = useState<Partial<Customer>>(() => {
     if (customer) return { ...customer, customAccessories: customer.customAccessories || [] };
     return { id: onSuggestId, status: 'scheduled', customAccessories: [] };
@@ -30,6 +84,13 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
   
   const [showConsultation, setShowConsultation] = useState(false);
   const [selectedPart, setSelectedPart] = useState<string>('前保桿');
+  const [tintCategory, setTintCategory] = useState<string>(() => {
+    // 試圖從現有規格反推分類
+    const currentSpec = customer?.windowTintBrand || '';
+    const found = Object.entries(TINT_GROUPS).find(([_, specs]) => specs.includes(currentSpec));
+    return found ? found[0] : '';
+  });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isUploading, setIsUploading] = useState(false);
 
   const CAR_PARTS = ['前保桿', '引擎蓋', '車頂', '左前葉', '右前葉', '左前門', '右前門', '左後門', '右後門', '左後葉', '右後葉', '尾箱上', '尾箱下', '後保桿', '鋼琴烤漆', '其他'];
@@ -57,7 +118,7 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
         }
       } catch (err) {
         console.error('上傳失敗:', err);
-        alert('照片上傳失敗，請稍後再試');
+        alert('照片上傳失敗: ' + (err.message || '請重新檢查儲存空間分頁'));
       } finally {
         setIsUploading(false);
       }
@@ -82,12 +143,54 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
     useManualTotal: false
   });
 
-  const getInitialDiscount = () => {
-     if (customer?.appliedDiscountName?.includes('生日')) return 'birthday';
-     if (customer?.appliedDiscountName?.includes('YT')) return 'youtube';
-     return 'none';
+  const getInitialDiscounts = (): string[] => {
+     if (!customer?.appliedDiscountName) return [];
+     const names = customer.appliedDiscountName.split(', ');
+     const ids: string[] = [];
+     names.forEach(name => {
+       const matched = PROMOTIONS.find(p => p.label === name);
+       if (matched) {
+         ids.push(matched.id);
+       } else {
+         if (name) ids.push('other');
+       }
+     });
+     return ids;
   };
-  const [discountType, setDiscountType] = useState<'none' | 'birthday' | 'youtube'>(getInitialDiscount());
+  const [discountTypes, setDiscountTypes] = useState<string[]>(getInitialDiscounts());
+  const [customDiscountName, setCustomDiscountName] = useState(
+    getInitialDiscounts().includes('other') ? customer?.appliedDiscountName?.split(', ').find(n => !PROMOTIONS.find(p => p.label === n)) || '' : ''
+  );
+  const [customDiscountAmount, setCustomDiscountAmount] = useState(
+    getInitialDiscounts().includes('other') ? customer?.discountAmount || 0 : 0
+  );
+
+  const toggleDiscount = (id: string) => {
+    setDiscountTypes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  React.useEffect(() => {
+    // 隔熱紙對應價格邏輯 (針對 Tesla Model 3 / Y)
+    const model = (formData.model || '').toLowerCase();
+    const brand = formData.windowTintBrand || '';
+    
+    if ((model.includes('model 3') || model.includes('model y')) && TINT_PRICE_TABLE[brand]) {
+       const isM3 = model.includes('model 3');
+       const hasSunroof = formData.hasSunroof;
+       let targetPrice = 0;
+       
+       const entry = TINT_PRICE_TABLE[brand];
+       if (isM3) {
+         targetPrice = hasSunroof ? entry.m3_sunroof : entry.m3;
+       } else {
+         targetPrice = hasSunroof ? entry.my_sunroof : entry.my;
+       }
+       
+       if (targetPrice > 0) {
+         setPrices(prev => ({ ...prev, windowTintPrice: targetPrice }));
+       }
+    }
+  }, [formData.model, formData.windowTintBrand, formData.hasSunroof]);
 
   let subtotal = (prices.mainServicePrice || 0) + (prices.windowTintPrice || 0) + (prices.digitalMirrorPrice || 0) + (prices.electricModPrice || 0);
   formData.customAccessories?.forEach(acc => {
@@ -95,11 +198,27 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
   });
 
   let discountAmount = 0;
-  if (discountType === 'birthday') {
-    discountAmount = Math.round((prices.mainServicePrice || 0) * 0.05);
-  } else if (discountType === 'youtube') {
-    discountAmount = 3000;
-  }
+  let currentSubtotal = subtotal;
+
+  // 1. First apply multipliers
+  discountTypes.forEach(id => {
+    const promo = PROMOTIONS.find(p => p.id === id);
+    if (promo && promo.type === 'discount') {
+      const reduction = Math.round(currentSubtotal * (1 - promo.val));
+      discountAmount += reduction;
+      currentSubtotal -= reduction;
+    }
+  });
+
+  // 2. Then apply fixed minus amounts
+  discountTypes.forEach(id => {
+    const promo = PROMOTIONS.find(p => p.id === id);
+    if (promo && promo.type === 'minus') {
+      discountAmount += promo.val;
+    } else if (promo && promo.type === 'custom') {
+      discountAmount += customDiscountAmount;
+    }
+  });
   
   const calculatedTotalPrice = subtotal - discountAmount;
   const totalPrice = prices.useManualTotal ? prices.manualTotalPrice : calculatedTotalPrice;
@@ -152,13 +271,34 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
   };
 
   const prepareSubmitData = (status: StatusType): Customer => {
-    const discountNames = { none: '', birthday: '生日優惠 (95折)', youtube: 'YT 介紹優惠 (-3000)' };
+    const appliedNames: string[] = [];
+    discountTypes.forEach(id => {
+      const promo = PROMOTIONS.find(p => p.id === id);
+      if (promo) {
+        if (promo.type === 'custom' && customDiscountName) {
+          appliedNames.push(customDiscountName);
+        } else if (promo.type !== 'none' || promo.id === 'front-wind' || promo.id === 'sx-color' || promo.id === 'cross-month' || promo.id === 'gift-pack') {
+          appliedNames.push(promo.label);
+        }
+      }
+    });
+    
+    // Auto-append notes if exists
+    let finalNotes = formData.notes || '';
+    discountTypes.forEach(id => {
+      const promo = PROMOTIONS.find(p => p.id === id);
+      if (promo?.note && !finalNotes.includes(promo.note)) {
+        finalNotes = finalNotes ? `${finalNotes}\n* 活動備註: ${promo.note}` : `* 活動備註: ${promo.note}`;
+      }
+    });
+
     return {
       ...(formData as Customer),
+      notes: finalNotes,
       status,
       totalAmount: totalPrice,
       revenue: profit,
-      appliedDiscountName: discountNames[discountType],
+      appliedDiscountName: appliedNames.join(', '),
       discountAmount: discountAmount,
       digitalMirrorPrice: prices.digitalMirrorPrice,
       electricModPrice: prices.electricModPrice,
@@ -177,37 +317,29 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
     const isConfirm = window.confirm('確定要轉入「現場施工」嗎？此案件將從排程區消失，進入施工站！');
     if (!isConfirm) return;
 
-    // 如果沒有檢核表，初始化標準 24 項檢核清單
-    const standardChecklist = [
-      { id: 'ck1', name: '全車清洗/深層去柏油', checked: false },
-      { id: 'ck2', name: '玻璃除油膜/細部清潔', checked: false },
-      { id: 'ck3', name: '前保桿施工', checked: false },
-      { id: 'ck4', name: '引擎蓋施工', checked: false },
-      { id: 'ck5', name: '車頂施工', checked: false },
-      { id: 'ck6', name: '左前葉子板施工', checked: false },
-      { id: 'ck7', name: '右前葉子板施工', checked: false },
-      { id: 'ck8', name: '左前門施工', checked: false },
-      { id: 'ck9', name: '右前門施工', checked: false },
-      { id: 'ck10', name: '左後門施工', checked: false },
-      { id: 'ck11', name: '右後門施工', checked: false },
-      { id: 'ck12', name: '左後葉子板施工', checked: false },
-      { id: 'ck13', name: '右後葉子板施工', checked: false },
-      { id: 'ck14', name: '尾箱蓋施工', checked: false },
-      { id: 'ck15', name: '後保桿施工', checked: false },
-      { id: 'ck16', name: '左右側裙施工', checked: false },
-      { id: 'ck17', name: '後視鏡殼施工', checked: false },
-      { id: 'ck18', name: '門柱/門邊漆面防護', checked: false },
-      { id: 'ck19', name: '內裝飾板/中控貼膜', checked: false },
-      { id: 'ck20', name: '隔熱紙施工與檢查', checked: false },
-      { id: 'ck21', name: '配件加裝/電改測試', checked: false },
-      { id: 'ck22', name: '收邊細部熱烘處理', checked: false },
-      { id: 'ck23', name: '全車完工QC檢驗', checked: false },
-      { id: 'ck24', name: '交車前清潔與交車準備', checked: false }
+    // 初始化簡化版標準檢核清單
+    const simplifiedChecklist = [
+      { id: 'ck_std_1', name: '前置清潔 (預洗與表面深層清潔)', checked: false },
+      { id: 'ck_std_2', name: `膜料施工: ${formData.mainService || ''} (${formData.mainServiceBrand || ''} - ${formData.filmColor || ''})`, checked: false },
+      { id: 'ck_std_3', name: '贈送配件施工', checked: false },
+      { id: 'ck_std_4', name: '完工自主檢查 (收邊、氣泡、完整度)', checked: false },
+      { id: 'ck_std_5', name: '交車前清潔與環境整理', checked: false }
     ];
+
+    // 動態加入加購項目
+    if (formData.windowTint) {
+      simplifiedChecklist.splice(2, 0, { id: 'ck_tint', name: `隔熱紙施工: ${formData.windowTint}`, checked: false });
+    }
+    if (formData.digitalMirror) {
+      simplifiedChecklist.splice(3, 0, { id: 'ck_mirror', name: `電子後視鏡安裝: ${formData.digitalMirror}`, checked: false });
+    }
+    if (formData.electricMod) {
+      simplifiedChecklist.splice(4, 0, { id: 'ck_electric', name: `電動改裝項目: ${formData.electricMod}`, checked: false });
+    }
 
     const updatedData = prepareSubmitData('construction');
     if (!updatedData.constructionChecklist || updatedData.constructionChecklist.length === 0) {
-      updatedData.constructionChecklist = standardChecklist;
+      updatedData.constructionChecklist = simplifiedChecklist;
     }
 
     onSubmit(updatedData, true);
@@ -367,17 +499,16 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
         <Package size={18} /> 車輛硬體資訊
       </h3>
       <div className="form-group col-span-4">
-        <label className="form-label">車牌號碼*</label>
-        <input required type="text" name="plateNumber" className="form-control" placeholder="ABC-1234" value={formData.plateNumber || ''} onChange={handleChange} />
+        <label className="form-label">車牌號碼</label>
+        <input type="text" name="plateNumber" className="form-control" placeholder="ABC-1234" value={formData.plateNumber || ''} onChange={handleChange} />
       </div>
-      <div className="form-group col-span-4">
-        <label className="form-label">汽車品牌</label>
-        <input type="text" name="brand" className="form-control" placeholder="Porsche" value={formData.brand || ''} onChange={handleChange} />
-      </div>
-      <div className="form-group col-span-4">
-        <label className="form-label">車種 (Model)</label>
-        <input type="text" name="model" className="form-control" placeholder="911, Model Y..." value={formData.model || ''} onChange={handleChange} />
-      </div>
+      <VehicleAutocomplete 
+        brand={formData.brand || ''}
+        model={formData.model || ''}
+        vehicleSize={formData.vehicleSize || ''}
+        vehicleMaster={vehicleMaster || []}
+        onSelect={(data) => setFormData(prev => ({ ...prev, ...data }))}
+      />
 
       {/* ── 施工排程與備料 ── */}
       {formData.status !== 'new' && (
@@ -446,52 +577,111 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
               <option value="局部保護/改色">局部保護/改色</option>
             </select>
           </div>
-          <div className="form-group col-span-4">
-            <label className="form-label">品牌 / 膜料顏色</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', gap: '4px' }}>
-              <select name="mainServiceBrand" className="form-control" value={formData.mainServiceBrand || ''} onChange={handleChange} style={{ padding: '8px 4px' }}>
-                <option value="">品牌</option>
-                {((formData.mainService || '').includes('改色') 
-                  ? ['AX', '3M', 'CYS', 'TeckWrap'] 
-                  : ['3M', 'Michelin', 'Atarap', 'Stek']
-                ).map(brand => <option key={brand} value={brand}>{brand}</option>)}
-              </select>
-              <input type="text" name="filmColor" className="form-control" placeholder="顏色" value={formData.filmColor || ''} onChange={handleChange} />
-            </div>
+          <div className="form-group col-span-2">
+            <label className="form-label">品牌</label>
+            <select name="mainServiceBrand" className="form-control" value={formData.mainServiceBrand || ''} onChange={handleChange}>
+              <option value="">選擇品牌</option>
+              {((formData.mainService || '').includes('改色') 
+                ? ['AX', '3M', 'CYS', 'TeckWrap'] 
+                : ['3M', 'Michelin', 'Atarap', 'Stek']
+              ).map(brand => <option key={brand} value={brand}>{brand}</option>)}
+            </select>
+          </div>
+          <div className="form-group col-span-2">
+            <label className="form-label">膜料顏色</label>
+            <input type="text" name="filmColor" className="form-control" placeholder="顏色細項" value={formData.filmColor || ''} onChange={handleChange} />
           </div>
           <div className="form-group col-span-4">
             <label className="form-label">施工價格 ($)</label>
             <input type="number" name="mainServicePrice" className="form-control" value={prices.mainServicePrice || ''} onChange={handlePriceChange} placeholder="0" />
           </div>
 
-          {/* 其他項目 (具備排程時間設定) */}
+          {/* 隔熱紙項目 (優化後) */}
+          <React.Fragment>
+            <div className="col-span-12" style={{ borderLeft: '4px solid #3b82f6', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px', marginTop: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '16px', alignItems: 'end' }}>
+                <div className="col-span-4">
+                  <label className="form-label" style={{ fontWeight: 'bold', color: '#1e3a8a' }}>隔熱紙 - 品牌類別</label>
+                  <select 
+                    className="form-control" 
+                    value={tintCategory} 
+                    onChange={(e) => {
+                      setTintCategory(e.target.value);
+                      setFormData(prev => ({ ...prev, windowTintBrand: '' }));
+                    }}
+                  >
+                    <option value="">請選擇品牌</option>
+                    {Object.keys(TINT_GROUPS).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-5">
+                  <label className="form-label" style={{ fontWeight: 'bold' }}>具體規格/型號</label>
+                  <select name="windowTintBrand" className="form-control" value={formData.windowTintBrand || ''} onChange={handleChange}>
+                    <option value="">選擇規格 (點選自動報價)</option>
+                    {(TINT_GROUPS[tintCategory] || []).map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-3" style={{ paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#0369a1', cursor: 'pointer', fontWeight: '600' }}>
+                    <input type="checkbox" name="hasSunroof" checked={formData.hasSunroof || false} onChange={handleChange} /> 
+                    包含天窗施工
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', alignItems: 'center' }}>
+                <div style={{ flex: '0 0 140px' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>施工金額</label>
+                  <input type="number" name="windowTintPrice" className="form-control" value={prices.windowTintPrice || ''} onChange={handlePriceChange} placeholder="$" />
+                </div>
+                <div style={{ flex: '0 0 160px' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>預計進場日期</label>
+                  <input type="date" name="windowTintDate" className="form-control" value={formData.windowTintDate || ''} onChange={handleChange} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>備註時段/詳細</label>
+                  <input type="text" name="windowTintScheduledTime" className="form-control" value={formData.windowTintScheduledTime || ''} onChange={handleChange} placeholder="e.g. 13:30 前擋+身" />
+                </div>
+              </div>
+            </div>
+          </React.Fragment>
+
+          {/* 其他配件項目 (同步優化) */}
           {[
-            { label: '隔熱紙項目', field: 'windowTint', brandField: 'windowTintBrand', priceField: 'windowTintPrice', scheduleField: 'windowTintScheduledTime' },
-            { label: '電子後視鏡', field: 'digitalMirror', brandField: 'digitalMirrorBrand', priceField: 'digitalMirrorPrice', scheduleField: 'digitalMirrorScheduledTime' },
-            { label: '電動改裝', field: 'electricMod', brandField: 'electricModBrand', priceField: 'electricModPrice', scheduleField: 'electricModScheduledTime' }
+            { label: '電子後視鏡', field: 'digitalMirror', brandField: 'digitalMirrorBrand', priceField: 'digitalMirrorPrice', scheduleField: 'digitalMirrorScheduledTime', dateField: 'digitalMirrorDate', color: '#8b5cf6' },
+            { label: '電動改裝', field: 'electricMod', brandField: 'electricModBrand', priceField: 'electricModPrice', scheduleField: 'electricModScheduledTime', dateField: 'electricModDate', color: '#ec4899' }
           ].map(row => (
-            <React.Fragment key={row.field}>
-              <div className="form-group col-span-4" style={{ borderLeft: '3px solid #e2e8f0', paddingLeft: '10px' }}>
-                <label className="form-label">{row.label}</label>
-                <input type="text" name={row.field} className="form-control" value={formData[row.field as keyof Customer] as string || ''} onChange={handleChange} />
-              </div>
-              <div className="form-group col-span-4">
-                <label className="form-label">品牌/規格</label>
-                <input type="text" name={row.brandField} className="form-control" value={formData[row.brandField as keyof Customer] as string || ''} onChange={handleChange} />
-              </div>
-              <div className="form-group col-span-4">
-                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <label className="form-label">價格 ($)</label>
-                    <div style={{ fontSize: '0.7rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Clock size={10} /> 安排施工時段
+            <div key={row.field} className="col-span-12" style={{ borderLeft: `4px solid ${row.color}`, background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '16px' }}>
+                <div className="col-span-4">
+                  <label className="form-label" style={{ fontWeight: 'bold', color: row.color }}>{row.label} - 項目</label>
+                  <input type="text" name={row.field} className="form-control" value={formData[row.field as keyof Customer] as string || ''} onChange={handleChange} placeholder="輸入項目名稱" />
+                </div>
+                <div className="col-span-8">
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'end' }}>
+                    <div style={{ flex: 1 }}>
+                      <label className="form-label" style={{ fontWeight: 'bold' }}>品牌/規格備註</label>
+                      <input type="text" name={row.brandField} className="form-control" value={formData[row.brandField as keyof Customer] as string || ''} onChange={handleChange} placeholder="請輸入品牌或詳細規格" />
                     </div>
-                 </div>
-                 <div style={{ display: 'flex', gap: '4px' }}>
-                    <input type="number" name={row.priceField} className="form-control" style={{ flex: 1 }} value={(prices as any)[row.priceField] || ''} onChange={handlePriceChange} placeholder="0" />
-                    <input type="text" name={row.scheduleField} className="form-control" style={{ flex: 1, fontSize: '0.8rem', borderColor: '#dcfce7' }} value={formData[row.scheduleField as keyof Customer] as string || ''} onChange={handleChange} placeholder="時間 (如 14:00)" />
-                 </div>
+                  </div>
+                </div>
               </div>
-            </React.Fragment>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', alignItems: 'center' }}>
+                <div style={{ flex: '0 0 140px' }}>
+                   <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>施工金額</label>
+                   <input type="number" name={row.priceField} className="form-control" value={(prices as any)[row.priceField] || ''} onChange={handlePriceChange} placeholder="$" />
+                </div>
+                <div style={{ flex: '0 0 160px' }}>
+                   <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>預計日期</label>
+                   <input type="date" name={row.dateField} className="form-control" value={formData[row.dateField as keyof Customer] as string || ''} onChange={handleChange} />
+                </div>
+                <div style={{ flex: 1 }}>
+                   <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>施工時段/說明</label>
+                   <input type="text" name={row.scheduleField} className="form-control" value={formData[row.scheduleField as keyof Customer] as string || ''} onChange={handleChange} placeholder="預約時段或位置說明" />
+                </div>
+              </div>
+            </div>
           ))}
 
           {/* 自訂配件 */}
@@ -560,27 +750,57 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
 
           {/* ── 價格總結區間 ── */}
           <div className="col-span-12" style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <label className="form-label" style={{ margin: 0, minWidth: '80px' }}>優惠方案</label>
-                <select className="form-control" value={discountType} onChange={(e) => setDiscountType(e.target.value as any)}>
-                  <option value="none">無優惠</option>
-                  <option value="birthday">生日優惠 (主方案95折)</option>
-                  <option value="youtube">YT 介紹優惠 (-3000)</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <label className="form-label" style={{ margin: 0, minWidth: '80px', color: '#be185d' }}>材料成本</label>
-                <input 
-                  type="number" 
-                  className="form-control" 
-                  style={{ borderColor: '#fca5a5' }}
-                  value={prices.cost || ''} 
-                  onChange={(e) => setPrices(prev => ({ ...prev, cost: Number(e.target.value) }))} 
-                  placeholder="輸入材料總成本" 
-                />
+            <div style={{ marginBottom: '16px' }}>
+              <label className="form-label" style={{ marginBottom: '8px', display: 'block', color: '#1e3a8a', fontWeight: 'bold' }}>選擇適用活動 / 優惠 (可多選)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {PROMOTIONS.filter(p => p.id !== 'none').map(p => {
+                  const selected = discountTypes.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => toggleDiscount(p.id)}
+                      style={{ 
+                        padding: '6px 14px', borderRadius: '20px', 
+                        border: `1.5px solid ${selected ? '#3b82f6' : '#cbd5e1'}`, 
+                        background: selected ? '#eff6ff' : '#fff', 
+                        color: selected ? '#1e40af' : '#475569', 
+                        fontSize: '0.8rem', fontWeight: selected ? '700' : '500', 
+                        cursor: 'pointer', transition: 'all 0.15s' 
+                      }}
+                    >
+                      {selected ? '✓ ' : ''}{p.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
+            
+            {discountTypes.includes('other') && (
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', background: '#fff', padding: '12px', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <label className="form-label" style={{ margin: 0, minWidth: '60px' }}>活動名稱</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    value={customDiscountName} 
+                    onChange={(e) => setCustomDiscountName(e.target.value)} 
+                    placeholder="手動輸入活動名稱" 
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <label className="form-label" style={{ margin: 0, minWidth: '60px', color: '#be185d' }}>折抵金額</label>
+                  <input 
+                    type="number" 
+                    className="form-control" 
+                    style={{ borderColor: '#fca5a5' }}
+                    value={customDiscountAmount || ''} 
+                    onChange={(e) => setCustomDiscountAmount(Number(e.target.value))} 
+                    placeholder="例如: 1500" 
+                  />
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px dashed #cbd5e1', paddingTop: '16px' }}>
               <div>
@@ -623,8 +843,34 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
 
       {/* ── 照片紀錄與售後待辦 ── */}
       <div className="col-span-12" style={{ marginTop: '24px', padding: '20px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-        <h3 className="section-title" style={{ marginTop: 0 }}><Camera size={18} /> 現場施工影像紀錄</h3>
+        <h3 className="section-title" style={{ marginTop: 0, color: '#ef4444' }}><Camera size={18} /> 現場施工影像紀錄與巡車影片</h3>
         
+        {/* 影片連結 */}
+        <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px dashed #cbd5e1' }}>
+          <label className="form-label" style={{ fontWeight: 'bold' }}>施工前巡車影片 (YouTube 不公開連結)</label>
+          <input 
+            type="text" 
+            name="videoUrl" 
+            className="form-control" 
+            placeholder="貼上 YouTube 影片網址 (例如: https://youtu.be/...)" 
+            value={formData.videoUrl || ''} 
+            onChange={handleChange}
+            style={{ marginBottom: '12px', border: '1px solid #fca5a5' }}
+          />
+          {getYouTubeEmbedUrl(formData.videoUrl) && (
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <iframe 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} 
+                src={getYouTubeEmbedUrl(formData.videoUrl)!} 
+                title="YouTube video player" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              ></iframe>
+            </div>
+          )}
+        </div>
+
         {/* 部位選擇 */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
           {CAR_PARTS.map(part => (
@@ -691,6 +937,59 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
             ></textarea>
           </div>
         )}
+      </div>
+
+      {/* ── 諮詢細節與客戶特徵 ── */}
+      <div className="form-group col-span-12">
+        <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ec4899', marginTop: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          <User size={18} /> 諮詢細節與客戶特徵紀錄
+        </h3>
+      </div>
+      
+      <div className="form-group col-span-3">
+        <label className="form-label">得知管道</label>
+        <input type="text" name="fromChannel" className="form-control" value={formData.fromChannel || ''} onChange={handleChange} placeholder="如：FB、介紹..." />
+      </div>
+      <div className="form-group col-span-3">
+        <label className="form-label">性格屬性</label>
+        <select name="personality" className="form-control" value={formData.personality || ''} onChange={handleChange}>
+          <option value="">未記錄</option>
+          <option value="乾脆清楚">乾脆清楚</option>
+          <option value="細節控">細節控</option>
+          <option value="謹慎重複確認">謹慎重複確認</option>
+          <option value="預算先驅">預算先驅</option>
+          <option value="愛車如命">愛車如命</option>
+          <option value="阿莎力老闆型">阿莎力老闆型</option>
+        </select>
+      </div>
+      <div className="form-group col-span-3">
+        <label className="form-label">溝通習性</label>
+        <input type="text" name="communicationStyle" className="form-control" value={formData.communicationStyle || ''} onChange={handleChange} placeholder="如：喜歡傳訊息、電話聯繫..." />
+      </div>
+      <div className="form-group col-span-3">
+        <label className="form-label">詢問工時 (天/時)</label>
+        <input type="text" name="workHoursAsked" className="form-control" value={formData.workHoursAsked || ''} onChange={handleChange} placeholder="客戶詢問的預計工時" />
+      </div>
+
+      <div className="form-group col-span-6">
+        <label className="form-label">主要特性標籤 (以逗號分隔)</label>
+        <input type="text" name="characteristic" className="form-control" value={formData.characteristic || ''} onChange={handleChange} placeholder="如：回頭客, 很準時, 龜毛..." />
+      </div>
+      <div className="form-group col-span-6">
+        <label className="form-label">職業或背景筆記</label>
+        <input type="text" name="occupation" className="form-control" value={formData.occupation || ''} onChange={handleChange} placeholder="如：科技業、醫生、同行..." />
+      </div>
+
+      <div className="form-group col-span-12">
+        <label className="form-label">施工細節特別要求 / 折點位置說明</label>
+        <textarea 
+          name="constructionDetails" 
+          className="form-control" 
+          rows={3} 
+          value={formData.constructionDetails || ''} 
+          onChange={handleChange}
+          placeholder="詳述施工要點、收邊方式、摺點位置特別要求..."
+        ></textarea>
       </div>
 
       <div className="form-group col-span-12">

@@ -14,16 +14,16 @@ export const PendingExcelImport: React.FC<PendingExcelImportProps> = ({ onImport
   const handleDownloadTemplate = () => {
     const wb = XLSX.utils.book_new();
     const data = [[
-      '編號', '姓名', '電話', '車牌', '車種', '施工項目', '膜料品牌', '膜料顏色',
-      '是否在行事曆上', '是否叫貨', '是否開報價單', '施工時間', '交車時間', '預計施工時間'
+      '編號', '姓名', '電話', '車牌', '車種', '施工項目', '品牌', '膜料細項', '是否叫貨', '報價單', 
+      '施工時間', '預計施工時間', '預計交車時間'
     ], [
-      'C-P001', '王大明', '0912345678', 'ABC-1234', 'Tesla Model 3', '全車改色膜', '3M', '消光黑',
-      'O', 'O', 'O', '上午 10:00', '18:00', '2024-05-01'
+      'C-P001', '張大方', '0911-222-333', 'ABC-8888', 'BMW M3', '全車犀牛皮', '3M', '透明亮面', 'O', 'O',
+      '2026-05-10', '2026-05-12', '2026-05-15'
     ]];
 
     const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '排程匯入範本');
-    XLSX.writeFile(wb, 'CRM_排程匯入範本.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, '待施工匯入範本');
+    XLSX.writeFile(wb, 'HouseWrapper_待施工匯入範本.xlsx');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +39,10 @@ export const PendingExcelImport: React.FC<PendingExcelImportProps> = ({ onImport
       const data = XLSX.utils.sheet_to_json(ws);
 
       const importedCustomers: Customer[] = data.map((row: any, index) => {
-        const isChecked = (val: any) => String(val || '').trim().toUpperCase() === 'O';
+        const isChecked = (val: any) => {
+          const s = String(val || '').trim().toUpperCase();
+          return s === 'O' || s === 'TRUE' || s === '是' || s === '1';
+        };
 
         const parseDate = (val: any) => {
           if (!val) return '';
@@ -47,8 +50,14 @@ export const PendingExcelImport: React.FC<PendingExcelImportProps> = ({ onImport
             const date = new Date(Math.round((val - 25569) * 86400 * 1000));
             return date.toISOString().split('T')[0];
           }
-          return String(val).replace(/\//g, '-').trim();
+          let s = String(val).replace(/\//g, '-').trim();
+          if (s.includes(' ')) s = s.split(' ')[0];
+          return s;
         };
+
+        const startDate = parseDate(row['施工時間'] || row['施工日期']);
+        const expEnd = parseDate(row['預計施工時間'] || row['預計施工日期']);
+        const delDate = parseDate(row['預計交車時間'] || row['交車時間'] || row['交車日期']);
 
         return {
           id: row['編號'] ? String(row['編號']) : `無編號-${Date.now()}-${index}`,
@@ -59,16 +68,15 @@ export const PendingExcelImport: React.FC<PendingExcelImportProps> = ({ onImport
           status: 'scheduled',
           
           mainService: String(row['施工項目'] || ''),
-          mainServiceBrand: String(row['膜料品牌'] || ''),
-          filmColor: String(row['膜料顏色'] || ''),
+          mainServiceBrand: String(row['品牌'] || ''),
+          filmColor: String(row['膜料細項'] || ''),
           
-          inCalendar: isChecked(row['是否在行事曆上']),
           materialOrdered: isChecked(row['是否叫貨']),
-          quoteCreated: isChecked(row['是否開報價單']),
+          quoteCreated: isChecked(row['報價單']),
           
-          constructionTime: String(row['施工時間'] || ''),
-          expectedDeliveryTime: String(row['交車時間'] || ''),
-          expectedStartDate: parseDate(row['預計施工時間']),
+          expectedStartDate: startDate,
+          expectedEndDate: expEnd || delDate,
+          deliveryDate: delDate || expEnd,
         } as Customer;
       });
 

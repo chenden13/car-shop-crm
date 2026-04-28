@@ -179,10 +179,23 @@ export const api = {
   },
 
   uploadPhoto: async (file: File, path: string) => {
-    const { data, error } = await supabase.storage.from('photos').upload(path, file);
-    if (error) throw error;
-    const { data: publicUrl } = supabase.storage.from('photos').getPublicUrl(data.path);
-    return publicUrl.publicUrl;
+    try {
+      // 移除路徑中的特殊字元與空格，避免 Supabase 報 Invalid key 錯誤
+      const safePath = path.replace(/[^\x00-\x7F]/g, '_').replace(/\s+/g, '_');
+      const { data, error } = await supabase.storage.from('photos').upload(safePath, file);
+      if (error) {
+        console.error('Supabase Storage Upload Error:', error);
+        throw error;
+      }
+      const { data: publicUrl } = supabase.storage.from('photos').getPublicUrl(data.path);
+      return publicUrl.publicUrl;
+    } catch (err: any) {
+      console.error('Storage API Exception:', err.message);
+      if (err.message.includes('Bucket not found')) {
+        alert('錯誤：找不到儲存空間 "photos"。請確保專案中已建立該 Bucket。');
+      }
+      throw err;
+    }
   },
 
   // --- 財務收支 ---
@@ -218,5 +231,42 @@ export const api = {
   deleteFinanceRecord: async (id: string) => {
     const { error } = await supabase.from('finance_records').delete().eq('id', id);
     if (error) console.warn('雲端刪除財務紀錄失敗:', error.message);
+  },
+
+  // --- 車型母檔 ---
+  getVehicleMaster: async () => {
+    try {
+      const { data, error } = await supabase.from('vehicle_master').select('*');
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('車型母檔讀取失敗:', err);
+      return [];
+    }
+  },
+
+  upsertVehicleMaster: async (vehicles: any[]) => {
+    const { error } = await supabase.from('vehicle_master').upsert(vehicles);
+    if (error) throw error;
+  },
+
+  // --- 財務結算 ---
+  getFinanceSettlements: async () => {
+    const { data, error } = await supabase.from('finance_settlements').select('*').order('settlement_date', { ascending: false });
+    if (error) { console.warn('結算紀錄讀取失敗:', error); return []; }
+    return data || [];
+  },
+
+  addFinanceSettlement: async (settlement: any) => {
+    const { error } = await supabase.from('finance_settlements').insert(settlement);
+    if (error) throw error;
+  },
+
+  updateFinanceRecordsSettlement: async (ids: string[], settlementId: string) => {
+    const { error } = await supabase
+      .from('finance_records')
+      .update({ settlement_id: settlementId })
+      .in('id', ids);
+    if (error) throw error;
   }
 };

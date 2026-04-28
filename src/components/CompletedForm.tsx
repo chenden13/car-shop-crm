@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Customer } from '../types';
-import { Calendar, CheckCircle, FileText, Gift, Heart, Send } from 'lucide-react';
+import { Calendar, Gift, Heart } from 'lucide-react';
 
 interface CompletedFormProps {
   customer: Customer;

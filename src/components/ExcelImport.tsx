@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import * as XLSX from 'xlsx';
 import type { Customer } from '../types';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 
 interface ExcelImportProps {
   onImport: (customers: Customer[]) => void;
@@ -15,11 +15,11 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
     const wb = XLSX.utils.book_new();
     const data = [[
       '編號', '姓名', '電話', '車牌', '車種', '施工項目', '品牌', '膜料細項', '是否叫貨', '是否建立報價單', 
-      '備註', '金額', '成本', '收益', '施工時間', '交車時間', '預計施工時間', '健檢時間', 
+      '備註', '金額', '成本', '收益', '施工時間', '預計施工時間', '預計交車時間', '健檢時間', 
       'POS系統編號', '大禮包發送', '表單發送', '兩周關心', '是否加入行事曆', '照片是否傳送'
     ], [
       'C-001', '王小明', '0912345678', 'ABC-1234', 'Tesla Model 3', '全車改色膜', '3M', '磨砂陶瓷黑', 'O', 'O',
-      '範例備註', '65000', '25000', '40000', '2026-05-01', '2026-05-05', '2026-05-03', '2026-06-05',
+      '範例備註', '65000', '25000', '40000', '2026-05-01', '2026-05-03', '2026-05-05', '2026-06-05',
       'POS-888', 'O', 'O', 'O', 'O', 'O'
     ]];
 
@@ -83,8 +83,8 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
           revenue: Number(row['收益']) || (Number(row['金額']) || 0) - (Number(row['成本']) || 0),
           
           expectedStartDate: parseDate(row['施工時間']),
-          deliveryDate: parseDate(row['交車時間']),
           expectedEndDate: parseDate(row['預計施工時間']),
+          deliveryDate: parseDate(row['預計交車時間'] || row['交車時間']),
           checkupDate: parseDate(row['健檢時間']),
           
           posId: String(row['POS系統編號'] || ''),

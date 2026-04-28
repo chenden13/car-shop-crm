@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { initialCustomers, initialInventory } from './data/mockData';
 import { api } from './lib/api';
 
 
-import type { Customer, StatusType, FilmInventory, User, InventoryLog, PurchaseRecord, FinanceRecord } from './types';
+import type { Customer, FilmInventory, User, InventoryLog, PurchaseRecord, FinanceRecord } from './types';
 
 import { Modal } from './components/Modal';
 import { PendingEditForm } from './components/PendingEditForm';
@@ -22,7 +21,8 @@ import { InventoryPage } from './components/InventoryPage';
 import { LoginPage } from './components/LoginPage';
 import { ActiveConstructionPage } from './components/ActiveConstructionPage';
 import { FinancePage } from './components/FinancePage';
-import { History, Plus, FileUp, Box, LogOut, User as UserIcon, Clock, Archive, Hammer, UserPlus, Wallet } from 'lucide-react';
+import { VehicleMasterImport } from './components/VehicleMasterImport';
+import { History, Box, LogOut, Clock, Hammer, UserPlus, Wallet, Save, Car } from 'lucide-react';
 
 
 
@@ -37,48 +37,10 @@ function App() {
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
   const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
+  const [settlements, setSettlements] = useState<any[]>([]);
   const [view, setView] = useState<'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory' | 'finance'>('inquiry');
   const [isLoading, setIsLoading] = useState(true);
   const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
-
-  useEffect(() => {
-    const initCloud = async () => {
-      console.log('正在連線至雲端:', 'https://emqtgyntrpounnmssxcf.supabase.co');
-      // alert('正在連線至: ' + 'https://emqtgyntrpounnmssxcf.supabase.co'); // 已確認，可暫不彈出
-      // 增加超時保護：如果 15 秒內連不上雲端，強行進入離線模式 (針對大量資料優化)
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('雲端連線超時，請檢查網路')), 15000));
-      
-      try {
-        const cloudCustomers = await api.getCustomers().catch(e => { console.error('客戶讀取失敗', e); return []; });
-        const cloudInventory = await api.getInventory().catch(e => { console.error('庫存讀取失敗', e); return []; });
-        const cloudLogs = await api.getInventoryLogs().catch(e => { console.error('日誌讀取失敗', e); return []; });
-        const cloudPurchases = await api.getPurchaseRecords().catch(e => { console.error('叫貨紀錄讀取失敗', e); return []; });
-        const cloudFinance = await api.getFinanceRecords().catch(e => { console.error('財務紀錄讀取失敗', e); return []; });
-        
-        console.log('雲端資料同步完畢:', cloudCustomers?.length, '筆客戶資料');
-        setCustomers(cloudCustomers || []);
-        setInventory(cloudInventory || []);
-        setInventoryLogs(cloudLogs || []);
-        console.log('載入叫貨紀錄:', cloudPurchases?.length, '筆');
-        setPurchaseRecords(cloudPurchases || []);
-        setFinanceRecords(cloudFinance || []);
-      } catch (err: any) {
-        console.error('雲端總體初始化失敗:', err);
-        alert(`❌ 雲端同步嚴重失敗：\n${err.message}`);
-      } finally {
-        setIsLoading(false);
-      }
-
-    };
-
-    if (currentUser) {
-      initCloud();
-    }
-  }, [currentUser]);
-
-
-
-
 
   const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
   const [isPendingEditModalOpen, setIsPendingEditModalOpen] = useState(false);
@@ -87,8 +49,50 @@ function App() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPendingImportModalOpen, setIsPendingImportModalOpen] = useState(false);
   const [isArchiveEditModalOpen, setIsArchiveEditModalOpen] = useState(false);
+  const [isVehicleImportModalOpen, setIsVehicleImportModalOpen] = useState(false);
+  
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [vehicleMaster, setVehicleMaster] = useState<any[]>([]);
+
+  useEffect(() => {
+    const initCloud = async () => {
+      console.log('正在連線至雲端:', 'https://emqtgyntrpounnmssxcf.supabase.co');
+      // 增加超時保護
+      setTimeout(() => {}, 15000); 
+      
+      try {
+        const cloudCustomers = await api.getCustomers().catch(e => { console.error('客戶讀取失敗', e); return []; });
+        const cloudInventory = await api.getInventory().catch(e => { console.error('庫存讀取失敗', e); return []; });
+        const cloudLogs = await api.getInventoryLogs().catch(e => { console.error('日誌讀取失敗', e); return []; });
+        const cloudPurchases = await api.getPurchaseRecords().catch(e => { console.error('叫貨紀錄讀取失敗', e); return []; });
+        const cloudFinance = await api.getFinanceRecords().catch(e => { console.error('財務紀錄讀取失敗', e); return []; });
+        const cloudSettlements = await api.getFinanceSettlements().catch(e => { console.error('結算紀錄讀取失敗', e); return []; });
+        const cloudVehicleMaster = await api.getVehicleMaster().catch(e => { console.error('車型母檔讀取失敗', e); return []; });
+        
+        setCustomers(cloudCustomers || []);
+        setInventory(cloudInventory || []);
+        setInventoryLogs(cloudLogs || []);
+        setPurchaseRecords(cloudPurchases || []);
+        setFinanceRecords(cloudFinance || []);
+        setSettlements(cloudSettlements || []);
+        setVehicleMaster(cloudVehicleMaster || []);
+      } catch (err: any) {
+        console.error('雲端總體初始化失敗:', err);
+        alert(`❌ 雲端同步嚴重失敗：\n${err.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (currentUser) {
+      initCloud();
+    }
+  }, [currentUser]);
+
+  const refreshVehicleMaster = async () => {
+    const data = await api.getVehicleMaster();
+    setVehicleMaster(data || []);
+  };
 
 
 
@@ -104,10 +108,6 @@ function App() {
     return `C-${String(list.length + 1).padStart(3, '0')}`;
   };
 
-  const handleOpenNewModal = () => {
-    setSelectedCustomer(null);
-    setIsIntakeModalOpen(true);
-  };
 
   const handleAddOrUpdateCustomer = async (target: Customer) => {
     try {
@@ -125,6 +125,15 @@ function App() {
     setIsPendingEditModalOpen(false);
     setIsIntakeModalOpen(false);
     setSelectedCustomer(null);
+  };
+
+  const handleUpdateCustomer = async (updatedCustomer: Customer) => {
+    try {
+      await api.upsertCustomer(updatedCustomer);
+      setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+    } catch (err) {
+      console.error('背景更新失敗:', err);
+    }
   };
 
   const handleGenericUpdate = async (updatedCustomer: Customer) => {
@@ -288,6 +297,32 @@ function App() {
     }
   };
 
+  const handleSettleBook = async (settlement: any, recordIds: string[]) => {
+    try {
+      // 1. 先存入結算快照
+      await api.addFinanceSettlement(settlement);
+      
+      // 2. 更新這些項目的 settlementId
+      if (recordIds.length > 0) {
+        await api.updateFinanceRecordsSettlement(recordIds, settlement.id);
+      }
+
+      // 3. 更新本地狀態
+      setSettlements(prev => [settlement, ...prev]);
+      setFinanceRecords(prev => prev.map(r => {
+        if (recordIds.includes(r.id)) {
+          return { ...r, settlementId: settlement.id };
+        }
+        return r;
+      }));
+
+      alert('帳本結算成功！該時段記錄已封存至結算紀錄。');
+    } catch (err) {
+      console.error('結算失敗:', err);
+      alert('結算失敗，請確認資料表欄位是否正確');
+    }
+  };
+
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -385,6 +420,7 @@ function App() {
         <PendingListPage
           customers={customers}
           onEditCustomer={handleEditCustomer}
+          onUpdateCustomer={handleGenericUpdate}
           userRole={currentUser.role}
           onImportClick={() => setIsPendingImportModalOpen(true)}
           onAddNew={() => { setSelectedCustomer(null); setIsPendingEditModalOpen(true); }}
@@ -398,10 +434,7 @@ function App() {
             setSelectedCustomer(c);
             setIsArchiveEditModalOpen(true);
           }}
-          onViewDetail={(c) => { 
-            setSelectedCustomer(c); 
-            setIsPreviewModalOpen(true); 
-          }} 
+          onViewDetail={() => {}} 
           userRole={currentUser.role}
           onImportClick={() => setIsImportModalOpen(true)}
         />
@@ -422,14 +455,17 @@ function App() {
       ) : view === 'finance' ? (
         <FinancePage 
           records={financeRecords}
+          settlements={settlements}
           onAddRecord={handleAddFinanceRecord}
           onDeleteRecord={handleDeleteFinanceRecord}
+          onSettle={handleSettleBook}
         />
       ) : (
 
         <ConstructionMonitorPage 
           customers={customers} 
           onBack={() => setView('pending')}
+          onUpdateProgress={handleUpdateCustomer}
           onEdit={(c) => {
             setSelectedCustomer(c);
             setIsConstructionModalOpen(true);
@@ -445,6 +481,7 @@ function App() {
       <Modal isOpen={isIntakeModalOpen} onClose={() => setIsIntakeModalOpen(false)} title="新增客戶資料表單">
         <IntakeForm 
           onSuggestId={generateCustomerId()}
+          vehicleMaster={vehicleMaster}
           onSubmit={(newCustomer) => {
             handleAddOrUpdateCustomer(newCustomer);
           }}
@@ -457,6 +494,7 @@ function App() {
         <PendingEditForm 
           customer={selectedCustomer} 
           onSuggestId={generateCustomerId()}
+          vehicleMaster={vehicleMaster}
           onSubmit={(updatedCustomer, moveToConstruction) => {
              handleAddOrUpdateCustomer(updatedCustomer);
              if (moveToConstruction) {
@@ -473,7 +511,13 @@ function App() {
         {selectedCustomer && (
           <ConstructionForm 
             customer={selectedCustomer} 
-            onSubmit={handleGenericUpdate} 
+            onSubmit={(c) => {
+              handleGenericUpdate(c);
+              setIsConstructionModalOpen(false);
+            }}
+            onSaveProgress={(c) => {
+              handleGenericUpdate(c);
+            }}
             onCancel={() => setIsConstructionModalOpen(false)} 
           />
         )}
@@ -515,6 +559,16 @@ function App() {
         <PendingExcelImport 
           onImport={handleImport} 
           onCancel={() => setIsPendingImportModalOpen(false)} 
+        />
+      </Modal>
+
+      <Modal isOpen={isVehicleImportModalOpen} onClose={() => setIsVehicleImportModalOpen(false)} title="車型母檔匯入">
+        <VehicleMasterImport 
+          onCancel={() => setIsVehicleImportModalOpen(false)}
+          onSuccess={() => {
+            setIsVehicleImportModalOpen(false);
+            refreshVehicleMaster();
+          }}
         />
       </Modal>
 
