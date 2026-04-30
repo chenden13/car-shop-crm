@@ -3,7 +3,8 @@ import type { Customer, Accessory, Role } from '../types';
 
 import { 
   Save, Trash2, Car, User, DollarSign, Shield, Calendar, RotateCcw, 
-  Camera, Image as ImageIcon, X, Plus, ChevronRight, FileText
+  Camera, Image as ImageIcon, X, Plus, ChevronRight, FileText,
+  AlertTriangle
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { getYouTubeEmbedUrl } from '../lib/utils';
