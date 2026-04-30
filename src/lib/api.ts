@@ -138,20 +138,10 @@ export const api = {
       }
 
       console.log('Final Purchase Data Size:', finalData.length);
-      // 只要最終沒資料 (報錯或真的沒資料)，回傳模擬資料供預覽
-      if (finalData.length === 0) {
-        return [
-          { id: 'PUR-001', orderDate: '2026-04-20', itemName: '3M 2080 消光黑', quantity: '2 捲', price: 0, status: 'arrival', operator: '系統' },
-          { id: 'PUR-002', orderDate: '2026-04-22', itemName: 'AX 冰川藍', quantity: '12 M', price: 0, status: 'ordered', operator: '系統' },
-          { id: 'PUR-003', orderDate: '2026-04-23', itemName: 'STEK 犀牛皮 1.5M', quantity: '1 捲', price: 0, status: 'pending', operator: '系統' },
-        ];
-      }
       return finalData;
     } catch (err) {
       console.warn('無法讀取叫貨紀錄表:', err);
-      return [
-        { id: 'PUR-001', orderDate: '2026-04-20', itemName: '3M 2080 消光黑', quantity: '2 捲', price: 18000, status: 'arrival', operator: '林管理員' },
-      ];
+      return [];
     }
   },
 
@@ -214,9 +204,7 @@ export const api = {
       }));
     } catch (err) {
       console.warn('財務紀錄讀取失敗或表格不存在:', err);
-      // 從 localStorage 讀取作為備援
-      const local = localStorage.getItem('financeRecords');
-      return local ? JSON.parse(local) : [];
+      return [];
     }
   },
 

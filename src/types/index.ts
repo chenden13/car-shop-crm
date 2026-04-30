@@ -96,6 +96,7 @@ export interface Customer {
   // 施工中
   videoUrl?: string;           // 施工前巡車影片連結 (YouTube)
   constructionChecklist?: ChecklistItem[];
+  preConstructionPhotos?: string[];
   damagePhotos?: CategorizedPhoto[]; 
   progressPhotos?: CategorizedPhoto[]; 
   

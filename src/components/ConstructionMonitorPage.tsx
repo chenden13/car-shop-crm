@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Customer } from '../types';
-import { LayoutDashboard, Edit3, CheckCircle2, Car, Clock } from 'lucide-react';
+import { LayoutDashboard, Edit3, CheckCircle2, Car, Clock, Calendar } from 'lucide-react';
+import { generateChecklist } from '../lib/utils';
+
 
 
 interface ConstructionMonitorPageProps {
@@ -19,11 +21,12 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
     return Math.round((checked / customer.constructionChecklist.length) * 100);
   };
 
-  const handleToggleCheck = (customer: Customer, id: string) => {
-    const updatedChecklist = customer.constructionChecklist?.map(item => 
-      item.id === id ? { ...item, checked: !item.checked } : item
-    ) || [];
-    onUpdateProgress({ ...customer, constructionChecklist: updatedChecklist });
+  const handleToggleCheck = (customer: Customer, itemName: string) => {
+    const currentChecklist = generateChecklist(customer);
+    const updatedChecklist = currentChecklist.map(item => 
+      item.name === itemName ? { ...item, checked: !item.checked } : item
+    );
+    onUpdateProgress({ ...customer, constructionChecklist: updatedChecklist as any });
   };
 
   return (
@@ -63,9 +66,10 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
         {/* Table Body */}
         <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
           {activeConstructions.length > 0 ? activeConstructions.map((customer, idx) => {
-            const progress = getProgress(customer);
-            const checkedCount = customer.constructionChecklist?.filter(i => i.checked).length ?? 0;
-            const totalCount = customer.constructionChecklist?.length ?? 0;
+            const currentChecklist = generateChecklist(customer);
+            const totalCount = currentChecklist.length;
+            const checkedCount = currentChecklist.filter(i => i.checked).length;
+            const progress = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
 
             return (
               <div 
@@ -84,7 +88,7 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
               >
                 {/* 1. Owner & Plate */}
                 <div>
-                  <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem' }}>{customer.name}</div>
+                  <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem' }}>{customer.name || '未提供'}</div>
                   <div style={{ fontSize: '1rem', color: 'var(--primary)', fontWeight: '800', margin: '4px 0' }}>{customer.plateNumber || '尚未掛牌'}</div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {customer.id}</div>
                 </div>
@@ -93,15 +97,21 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
                 <div>
                   <div style={{ fontWeight: '700', color: '#1e293b' }}>{customer.brand}</div>
                   <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{customer.model}</div>
-                  {customer.vehicleSize && <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#f1f5f9', borderRadius: '4px', color: '#64748b' }}>{customer.vehicleSize}</span>}
+                  {customer.vehicleSize && <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#f1f5f9', borderRadius: '4px', color: '#64748b', display: 'inline-block', marginTop: '4px' }}>{customer.vehicleSize}</span>}
+                  
+                  {customer.expectedStartDate && customer.expectedEndDate && (
+                    <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#8b5cf6', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Clock size={12} /> {customer.expectedStartDate.substring(5)} ~ {customer.expectedEndDate.substring(5)}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. Detailed Progress Checklist */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                   {customer.constructionChecklist?.map(step => (
+                   {currentChecklist.map(step => (
                      <div 
                       key={step.id} 
-                      onClick={() => handleToggleCheck(customer, step.id)}
+                      onClick={() => handleToggleCheck(customer, step.name)}
                       style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
@@ -115,14 +125,14 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
                         fontSize: '0.8rem'
                       }}
                      >
-                       {step.checked ? <CheckCircle2 size={14} color="#10b981" /> : <div style={{ width: 14, height: 14, border: '1px solid #cbd5e1', borderRadius: '50%' }} />}
-                       <span style={{ color: step.checked ? '#065f46' : '#64748b', textDecoration: step.checked ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                       {step.checked ? <CheckCircle2 size={14} color="#10b981" style={{ flexShrink: 0 }} /> : <div style={{ width: 14, height: 14, border: '1px solid #cbd5e1', borderRadius: '50%', flexShrink: 0 }} />}
+                       <span style={{ color: step.checked ? '#065f46' : '#64748b', textDecoration: step.checked ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: step.checked ? 'bold' : 'normal' }}>
                          {step.name}
                        </span>
                      </div>
                    ))}
-                   {(!customer.constructionChecklist || customer.constructionChecklist.length === 0) && (
-                     <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>尚未初始化檢核清單</div>
+                   {currentChecklist.length === 0 && (
+                     <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>尚未有任何項目</div>
                    )}
                 </div>
 
@@ -136,8 +146,9 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
                       <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : 'var(--primary)', transition: 'width 0.4s ease' }} />
                    </div>
                    <div style={{ marginTop: '10px', fontSize: '0.7rem', color: '#64748b' }}>
-                      主項: {customer.mainService}
+                      主項: {customer.mainService || '未指定'}
                    </div>
+
                 </div>
 
                 {/* 5. Expected Delivery */}
