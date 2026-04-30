@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Car, Shield, Settings, Info, Calendar, Plus, Trash2, Tag, Save, Clock, ChevronRight } from 'lucide-react';
+import { User, Car, Shield, Settings, Info, Calendar, Plus, Trash2, Tag, Save, Clock, ChevronRight, Package, Truck, Wallet } from 'lucide-react';
 import type { Customer, Accessory, Promotion } from '../types';
 import { VehicleAutocomplete } from './VehicleAutocomplete';
 
@@ -157,13 +157,44 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
                 <option value="局部施工">局部施工</option>
               </select>
             </div>
-            <div className="form-group col-span-4"><label className="form-label">膜料品牌/規格</label><input type="text" name="mainServiceBrand" className="form-control" value={formData.mainServiceBrand || ''} onChange={handleChange} /></div>
-            <div className="form-group col-span-2"><label className="form-label">顏色</label><input type="text" name="filmColor" className="form-control" value={formData.filmColor || ''} onChange={handleChange} /></div>
+            <div className="form-group col-span-4"><label className="form-label">膜料品牌/規格</label><input type="text" name="mainServiceBrand" className="form-control" value={formData.mainServiceBrand || ''} onChange={handleChange} placeholder="例如: 3M, Avery" /></div>
+            <div className="form-group col-span-2"><label className="form-label">顏色</label><input type="text" name="filmColor" className="form-control" value={formData.filmColor || ''} onChange={handleChange} placeholder="顏色備註" /></div>
             <div className="form-group col-span-2"><label className="form-label">金額</label><input type="number" name="mainServicePrice" className="form-control" value={prices.mainServicePrice || ''} onChange={handlePriceChange} /></div>
+            
+            {/* MISSING FIELDS RESTORED */}
+            <div className="form-group col-span-4"><label className="form-label">隔熱紙品牌</label><input type="text" name="windowTintBrand" className="form-control" value={formData.windowTintBrand || ''} onChange={handleChange} placeholder="例如: 舒熱佳" /></div>
+            <div className="form-group col-span-4"><label className="form-label">隔熱紙部位</label><input type="text" name="windowTint" className="form-control" value={formData.windowTint || ''} onChange={handleChange} placeholder="前擋/車身" /></div>
+            <div className="form-group col-span-4"><label className="form-label">隔熱紙金額</label><input type="number" name="windowTintPrice" className="form-control" value={prices.windowTintPrice || ''} onChange={handlePriceChange} /></div>
+
+            <div className="form-group col-span-4"><label className="form-label">電子後視鏡型號</label><input type="text" name="digitalMirror" className="form-control" value={formData.digitalMirror || ''} onChange={handleChange} placeholder="型號備註" /></div>
+            <div className="form-group col-span-2"><label className="form-label">金額</label><input type="number" name="digitalMirrorPrice" className="form-control" value={prices.digitalMirrorPrice || ''} onChange={handlePriceChange} /></div>
+            <div className="form-group col-span-4"><label className="form-label">電動改裝項目</label><input type="text" name="electricMod" className="form-control" value={formData.electricMod || ''} onChange={handleChange} placeholder="尾門/吸門" /></div>
+            <div className="form-group col-span-2"><label className="form-label">金額</label><input type="number" name="electricModPrice" className="form-control" value={prices.electricModPrice || ''} onChange={handlePriceChange} /></div>
           </div>
         </div>
 
-        {/* SECTION 3: CUSTOM ACCESSORIES */}
+        {/* SECTION 3: SCHEDULING */}
+        <div className="form-section" style={{ borderTop: '6px solid #a855f7' }}>
+          <div className="section-header">
+            <h3 className="section-title" style={{ color: '#a855f7' }}><Calendar size={20} /> 排程與時程</h3>
+          </div>
+          <div className="form-grid">
+            <div className="form-group col-span-4">
+              <label className="form-label">進場日期</label>
+              <input type="date" name="expectedStartDate" className="form-control" value={formData.expectedStartDate || ''} onChange={handleChange} />
+            </div>
+            <div className="form-group col-span-4">
+              <label className="form-label">預計完工</label>
+              <input type="date" name="expectedEndDate" className="form-control" value={formData.expectedEndDate || ''} onChange={handleChange} />
+            </div>
+            <div className="form-group col-span-4">
+              <label className="form-label">預計交車</label>
+              <input type="date" name="deliveryDate" className="form-control" value={formData.deliveryDate || ''} onChange={handleChange} />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 4: CUSTOM ACCESSORIES */}
         <div className="form-section" style={{ borderTop: '6px solid var(--accent)' }}>
           <div className="section-header">
             <h3 className="section-title" style={{ color: 'var(--accent)' }}><Plus size={20} /> 客製配件與贈品</h3>
@@ -180,7 +211,7 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
           </div>
         </div>
 
-        {/* SECTION 4: CONSULTATION & PROMOTIONS */}
+        {/* SECTION 5: CONSULTATION & PROMOTIONS */}
         <div className="form-section" style={{ borderTop: '6px solid #10b981' }}>
           <div className="section-header">
             <h3 className="section-title" style={{ color: '#10b981' }}><Info size={20} /> 諮詢細節與活動</h3>
@@ -202,16 +233,51 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({ customer, onSu
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem' }}>
                 <input type="checkbox" name="easyGoing" checked={!!formData.easyGoing} onChange={handleChange} /> 好相處
               </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem' }}>
+                <input type="checkbox" name="likesCalls" checked={!!formData.likesCalls} onChange={handleChange} /> 喜歡電話
+              </label>
+            </div>
+            <div className="form-group col-span-12">
+              <label className="form-label">優惠活動套用 (可複選)</label>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {PROMOTIONS.map(p => (
+                  <button 
+                    key={p.id} type="button" 
+                    onClick={() => toggleDiscount(p.id)}
+                    className="btn"
+                    style={{ 
+                      fontSize: '0.8rem', 
+                      padding: '6px 12px',
+                      background: discountTypes.includes(p.id) ? 'var(--primary)' : 'white',
+                      color: discountTypes.includes(p.id) ? 'white' : '#717171',
+                      borderColor: discountTypes.includes(p.id) ? 'var(--primary)' : '#ebebeb',
+                      border: '1px solid'
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="form-group col-span-12">
+              <label className="form-label">情資備註</label>
+              <textarea name="notes" className="form-control" rows={3} value={formData.notes || ''} onChange={handleChange} placeholder="記錄客戶偏好、溝通重點..." />
             </div>
           </div>
         </div>
 
-        {/* SECTION 5: SUMMARY & BUDGET */}
-        <div className="form-section" style={{ background: '#f7f7f7', border: '1px solid #222' }}>
+        {/* SECTION 6: SUMMARY & BUDGET */}
+        <div className="form-section" style={{ background: '#f7f7f7', border: '1px solid #222', position: 'sticky', bottom: 0, zIndex: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '0.9rem', color: '#717171', fontWeight: '700' }}>預估總金額 (折扣後)</div>
-              <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#222' }}>${totalPrice.toLocaleString()}</div>
+            <div style={{ display: 'flex', gap: '30px' }}>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: '#717171', fontWeight: '700' }}>折抵金額</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#ff385c' }}>-${discountAmount.toLocaleString()}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.9rem', color: '#717171', fontWeight: '700' }}>預估總金額 (成交價)</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#222' }}>${totalPrice.toLocaleString()}</div>
+              </div>
             </div>
             <button type="submit" className="btn btn-primary" style={{ padding: '16px 40px', borderRadius: '16px', fontSize: '1.1rem' }}>
               <Save size={20} /> 儲存變更
