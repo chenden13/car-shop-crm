@@ -37,7 +37,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+      background: 'linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%)',
       padding: '20px'
     }}>
       {/* Decorative items */}
@@ -68,8 +68,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           }}>
             <Car color="white" size={32} />
           </div>
-          <h1 style={{ color: 'white', fontSize: '1.75rem', fontWeight: '800', margin: '0 0 8px 0' }}>CarShop CRM</h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>店內管理系統 - 請登入以繼續工作</p>
+          <h1 style={{ color: 'var(--primary)', fontSize: '1.75rem', fontWeight: '800', margin: '0 0 8px 0' }}>好室多膜 CRM</h1>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>V.613 PRO MAX - 內部管理系統</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -80,7 +80,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <input 
                 type="text" 
                 className="form-control" 
-                style={{ paddingLeft: '40px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white' }}
+                style={{ paddingLeft: '40px', background: 'rgba(255, 255, 255, 0.8)', border: '1px solid #e2e8f0', color: 'var(--text-main)' }}
                 placeholder="輸入帳號"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -96,7 +96,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <input 
                 type="password" 
                 className="form-control" 
-                style={{ paddingLeft: '40px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white' }}
+                style={{ paddingLeft: '40px', background: 'rgba(255, 255, 255, 0.8)', border: '1px solid #e2e8f0', color: 'var(--text-main)' }}
                 placeholder="輸入密碼"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

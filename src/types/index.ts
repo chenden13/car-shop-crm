@@ -16,11 +16,14 @@ export interface Customer {
   birthday?: string;
   address?: string;
   fromChannel?: string;
+  consultationDate?: string;
+  interestedAccessories?: string;
   
   // 車輛資訊
   plateNumber: string;
   brand?: string;
   model?: string;
+  vehicleSize?: string; // S, M, L, XL, etc.
   
   // 客戶特徵
   convenientTime?: 'weekday' | 'weekend';
@@ -49,18 +52,33 @@ export interface Customer {
   inCalendar?: boolean;
   mainService?: string;
   mainServiceBrand?: string;
-  expectedStartDate?: string;
-  expectedEndDate?: string;
+  expectedStartDate?: string;    // 預計進場/留車日期
+  constructionTime?: string;     // 預計進場時間/留車時間
+  constructionStartDate?: string; // 預計施工日期
+  expectedEndDate?: string;      // 預計交車日期
+  expectedDeliveryTime?: string; // 預計交車時間
   materialOrdered?: boolean;
   
   windowTint?: string;
   windowTintBrand?: string;
+  windowTintPrice?: number;
+  hasSunroof?: boolean;
+  windowTintScheduledTime?: string;
+  windowTintDate?: string;
   digitalMirror?: string;
   digitalMirrorBrand?: string;
+  digitalMirrorPrice?: number;
+  digitalMirrorScheduledTime?: string;
+  digitalMirrorDate?: string;
   electricMod?: string;
   electricModBrand?: string;
+  electricModPrice?: number;
+  electricModScheduledTime?: string;
+  electricModDate?: string;
+  mainServicePrice?: number;
   
   customAccessories?: Accessory[];
+  accessoryScheduling?: { [key: string]: string };
   giftItems?: string[];
 
   // 財務資訊
@@ -76,6 +94,7 @@ export interface Customer {
 
   
   // 施工中
+  videoUrl?: string;           // 施工前巡車影片連結 (YouTube)
   constructionChecklist?: ChecklistItem[];
   damagePhotos?: CategorizedPhoto[]; 
   progressPhotos?: CategorizedPhoto[]; 
@@ -94,6 +113,11 @@ export interface Customer {
   
   photosRetaken?: boolean;
   photosSent?: boolean;
+  pendingItems?: string; // 完工後待處理事項 (補貼、配件未裝等)
+  communicationStyle?: string;
+  workHoursAsked?: string;
+  characteristic?: string;
+  constructionDetails?: string;
 }
 
 export interface CategorizedPhoto {
@@ -125,6 +149,7 @@ export interface FilmInventory {
   brand: string;
   color: string;
   size: string;
+  currentMeters?: number;
   location: StorageLocation;
   lastUpdated: string;
   notes?: string;
@@ -140,3 +165,24 @@ export interface InventoryLog {
 }
 
 
+export interface PurchaseRecord {
+  id: string;
+  orderDate: string;
+  itemName: string;
+  quantity: string;
+  price: number;
+  status: 'ordered' | 'received' | 'pending' | 'arrival';
+  notes?: string;
+  operator: string;
+}
+
+export interface FinanceRecord {
+  id: string;
+  date: string;
+  type: 'income' | 'expense';
+  category: string; // e.g. '施工收入', '膜料進貨', '耗材', '雜支'
+  amount: number;
+  description: string;
+  operator: string;
+  settlementId?: string; // 已結算對應的 ID
+}
