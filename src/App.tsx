@@ -19,7 +19,7 @@ import { LoginPage } from './components/LoginPage';
 import { ActiveConstructionPage } from './components/ActiveConstructionPage';
 import { FinancePage } from './components/FinancePage';
 import { VehicleMasterImport } from './components/VehicleMasterImport';
-import { History, Box, LogOut, Clock, Hammer, UserPlus, Wallet, Save, Car, List } from 'lucide-react';
+import { History, Box, LogOut, Clock, Hammer, UserPlus, Wallet, Save, Car, List, Menu, X } from 'lucide-react';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -44,6 +44,7 @@ function App() {
   
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [vehicleMaster, setVehicleMaster] = useState<any[]>([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const initCloud = async () => {
@@ -125,9 +126,7 @@ function App() {
     setIsPendingImportModalOpen(false);
     const existingIds = new Set(customers.map(c => c.id));
     const filtered = newCustomers.filter(c => !existingIds.has(c.id));
-
     if (filtered.length === 0) return;
-
     try {
       setImportProgress({ current: 0, total: filtered.length });
       for (let i = 0; i < filtered.length; i++) {
@@ -141,7 +140,7 @@ function App() {
     }
   };
 
-  const handleUpdateInventory = async (item: FilmInventory, detailsOverride?: string) => {
+  const handleUpdateInventory = async (item: FilmInventory) => {
     try {
       await api.updateInventory(item);
       setInventory(prev => prev.map(i => i.id === item.id ? item : i));
@@ -194,7 +193,7 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setView('pending');
+    setView('inquiry');
   };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -204,113 +203,103 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [mobileHome, setMobileHome] = useState(true);
-
   if (!currentUser) return <LoginPage onLogin={setCurrentUser} />;
   
   if (isLoading) return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-      <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-      <p style={{ marginTop: '16px', color: '#64748b', fontWeight: 'bold' }}>雲端同步中...</p>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
+      <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTopColor: 'var(--primary)', borderRadius: '50%' }}></div>
+      <p style={{ marginTop: '16px', color: '#222', fontWeight: '700' }}>好室多膜 雲端同步中...</p>
     </div>
   );
 
-  const menuItems = [
-    { id: 'inquiry', name: '諮詢進件區', icon: <UserPlus size={24} />, color: '#4f46e5', desc: '新客諮詢與進件紀錄' },
-    { id: 'pending', name: '待施工排程', icon: <Clock size={24} />, color: '#0ea5e9', desc: '預約案件與排程管理' },
-    { id: 'monitor', name: '現場施工監控', icon: <Hammer size={24} />, color: '#10b981', desc: '即時進度與檢核追蹤' },
-    { id: 'archive', name: '完工案件存檔', icon: <History size={24} />, color: '#ec4899', desc: '過往案件調閱與分析' },
-    { id: 'inventory', name: '膜料庫存管理', icon: <Box size={24} />, color: '#f59e0b', desc: '捲料、配件庫存控管' },
-    { id: 'finance', name: '收支流水帳', icon: <Wallet size={24} />, color: '#8b5cf6', desc: '每日財務與結算報表' },
+  const navItems = [
+    { id: 'inquiry', name: '諮詢進件', icon: <UserPlus size={18} /> },
+    { id: 'pending', name: '施工排程', icon: <Clock size={18} /> },
+    { id: 'monitor', name: '施工監控', icon: <Hammer size={18} /> },
+    { id: 'archive', name: '完工檔案', icon: <History size={18} /> },
+    { id: 'inventory', name: '膜料庫存', icon: <Box size={18} /> },
+    { id: 'finance', name: '收支流水', icon: <Wallet size={18} /> },
   ];
 
-  if (isMobile && mobileHome) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f0f9ff', padding: '24px 20px' }}>
-        <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--primary)', margin: 0 }}>好室多膜</h1>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 'bold', margin: '4px 0 0 0' }}>{currentUser.name}，歡迎回來</p>
-          </div>
-          <button onClick={handleLogout} style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '12px', borderRadius: '12px', color: '#ef4444' }}>
-            <LogOut size={20} />
-          </button>
-        </header>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          {menuItems.map(item => (
-            <button key={item.id} onClick={() => { setView(item.id as any); setMobileHome(false); }} style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '24px 16px', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', transition: 'transform 0.2s' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${item.color}15`, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{item.name}</div>
-                <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>{item.desc}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="app-container">
-      <header className="app-header glass-panel">
-        <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '1.2rem' }}>C</div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '-0.5px' }}>好室多膜 CRM</h1>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>V.613.2 PRO <span style={{ width: '6px', height: '6px', background: '#10b981', borderRadius: '50%' }}></span></span>
+    <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <header className="app-header">
+        <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '900' }}>C</div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.5px' }}>好室多膜</h1>
+            <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '800' }}>V.613.3 PRO <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#10b981', borderRadius: '50%' }}></span></span>
           </div>
         </div>
 
-        <div className="header-actions">
-          {isMobile ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', justifyContent: 'space-between' }}>
-              <button className="btn btn-outline" onClick={() => setMobileHome(true)} style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary)' }}><List size={18} /> 選單</button>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-main)' }}>{currentUser.name}</div>
-              </div>
+        {!isMobile ? (
+          <nav style={{ display: 'flex', gap: '8px' }}>
+            {navItems.map(item => (
+              <button 
+                key={item.id} 
+                onClick={() => setView(item.id as any)}
+                className="btn"
+                style={{ 
+                  background: view === item.id ? '#f7f7f7' : 'transparent',
+                  color: view === item.id ? '#222' : '#717171',
+                  border: 'none',
+                  padding: '8px 16px'
+                }}
+              >
+                {item.icon} {item.name}
+              </button>
+            ))}
+          </nav>
+        ) : (
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{ background: 'none', border: 'none', padding: '8px' }}>
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        )}
+
+        {!isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: '800' }}>{currentUser.name}</div>
+              <div style={{ fontSize: '0.7rem', color: '#717171' }}>{currentUser.role.toUpperCase()}</div>
             </div>
-          ) : (
-            <>
-              <div className="nav-group">
-                <button className={`nav-tab ${view === 'inquiry' ? 'active' : ''}`} onClick={() => setView('inquiry')}><UserPlus size={18} /> 諮詢進件</button>
-                <button className={`nav-tab ${view === 'pending' ? 'active' : ''}`} onClick={() => setView('pending')}><Clock size={18} /> 待施工排程</button>
-                <button className={`nav-tab ${view === 'monitor' ? 'active' : ''}`} onClick={() => setView('monitor')}><Hammer size={17} /> 現場監控</button>
-                <button className={`nav-tab ${view === 'archive' ? 'active' : ''}`} onClick={() => setView('archive')}><History size={17} /> 完工檔案</button>
-                <button className={`nav-tab ${view === 'inventory' ? 'active' : ''}`} onClick={() => setView('inventory')}><Box size={17} /> 庫存</button>
-                <button className={`nav-tab ${view === 'finance' ? 'active' : ''}`} onClick={() => setView('finance')}><Wallet size={17} /> 財務</button>
-              </div>
-              <div className="user-area" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-main)' }}>{currentUser.name}</div>
-                </div>
-                <button className="btn" onClick={handleLogout} style={{ background: '#f8fafc', color: '#64748b', padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0' }}><LogOut size={18} /></button>
-              </div>
-            </>
-          )}
-        </div>
+            <button className="btn btn-outline" onClick={handleLogout} style={{ padding: '8px' }}><LogOut size={18} /></button>
+          </div>
+        )}
       </header>
 
-      {view === 'inquiry' ? (
-        <InquiryPage customers={customers} onEditCustomer={handleEditCustomer} userRole={currentUser.role} onAddNew={() => setIsIntakeModalOpen(true)} />
-      ) : view === 'monitor' ? (
-        <ActiveConstructionPage customers={customers} onEditCustomer={(c) => { setSelectedCustomer(c); setIsConstructionModalOpen(true); }} />
-      ) : view === 'pending' ? (
-        <PendingListPage customers={customers} onEditCustomer={handleEditCustomer} onUpdateCustomer={handleGenericUpdate} userRole={currentUser.role} onImportClick={() => setIsPendingImportModalOpen(true)} onAddNew={() => { setSelectedCustomer(null); setIsPendingEditModalOpen(true); }} />
-      ) : view === 'archive' ? (
-        <ArchivePage customers={customers} onBack={() => setView('pending')} onUpdate={(c) => setCustomers(prev => prev.map(x => x.id === c.id ? c : x))} onEdit={(c) => { setSelectedCustomer(c); setIsArchiveEditModalOpen(true); }} onViewDetail={() => {}} userRole={currentUser.role} onImportClick={() => setIsImportModalOpen(true)} />
-      ) : view === 'inventory' ? (
-        <InventoryPage inventory={inventory} inventoryLogs={inventoryLogs} purchaseRecords={purchaseRecords} userRole={currentUser.role} onAddInventory={handleAddInventory} onUpdateInventory={handleUpdateInventory} onRemoveInventory={handleRemoveInventory} onAddPurchaseRecord={handleAddPurchaseRecord} onBack={() => setView('pending')} />
-      ) : (
-        <FinancePage records={financeRecords} settlements={settlements} onAddRecord={handleAddFinanceRecord} onDeleteRecord={handleDeleteFinanceRecord} onSettle={handleSettleBook} />
+      {isMobile && isMenuOpen && (
+        <div style={{ position: 'fixed', top: '60px', left: 0, right: 0, bottom: 0, background: '#fff', zIndex: 1500, padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {navItems.map(item => (
+            <button 
+              key={item.id} 
+              onClick={() => { setView(item.id as any); setIsMenuOpen(false); }}
+              className="btn btn-outline"
+              style={{ justifyContent: 'flex-start', padding: '16px', fontSize: '1.1rem' }}
+            >
+              {item.icon} {item.name}
+            </button>
+          ))}
+          <div style={{ marginTop: 'auto', borderTop: '1px solid #ebebeb', paddingTop: '20px' }}>
+             <div style={{ marginBottom: '16px', fontWeight: '800' }}>{currentUser.name} ({currentUser.role})</div>
+             <button className="btn btn-primary" onClick={handleLogout} style={{ width: '100%' }}>登出系統</button>
+          </div>
+        </div>
       )}
+
+      <main style={{ flex: 1, padding: isMobile ? '20px 10px' : '32px 40px' }}>
+        {view === 'inquiry' && <InquiryPage customers={customers} onEditCustomer={handleEditCustomer} userRole={currentUser.role} onAddNew={() => setIsIntakeModalOpen(true)} />}
+        {view === 'pending' && <PendingListPage customers={customers} onEditCustomer={handleEditCustomer} onUpdateCustomer={handleGenericUpdate} userRole={currentUser.role} onImportClick={() => setIsPendingImportModalOpen(true)} onAddNew={() => { setSelectedCustomer(null); setIsPendingEditModalOpen(true); }} />}
+        {view === 'monitor' && <ActiveConstructionPage customers={customers} onEditCustomer={(c) => { setSelectedCustomer(c); setIsConstructionModalOpen(true); }} />}
+        {view === 'archive' && <ArchivePage customers={customers} onBack={() => setView('pending')} onUpdate={handleUpdateCustomer} onEdit={(c) => { setSelectedCustomer(c); setIsArchiveEditModalOpen(true); }} onViewDetail={() => {}} userRole={currentUser.role} onImportClick={() => setIsImportModalOpen(true)} />}
+        {view === 'inventory' && <InventoryPage inventory={inventory} inventoryLogs={inventoryLogs} purchaseRecords={purchaseRecords} userRole={currentUser.role} onAddInventory={handleAddInventory} onUpdateInventory={handleUpdateInventory} onRemoveInventory={handleRemoveInventory} onAddPurchaseRecord={handleAddPurchaseRecord} onBack={() => setView('pending')} />}
+        {view === 'finance' && <FinancePage records={financeRecords} settlements={settlements} onAddRecord={handleAddFinanceRecord} onDeleteRecord={handleDeleteFinanceRecord} onSettle={handleSettleBook} />}
+      </main>
 
       <Modal isOpen={isIntakeModalOpen} onClose={() => setIsIntakeModalOpen(false)} title="新增客戶資料表單">
         <IntakeForm onSuggestId={generateCustomerId()} vehicleMaster={vehicleMaster} onSubmit={handleAddOrUpdateCustomer} onCancel={() => setIsIntakeModalOpen(false)} />
       </Modal>
 
-      <Modal isOpen={isPendingEditModalOpen} onClose={() => setIsPendingEditModalOpen(false)} title={selectedCustomer ? "修改待施工案件" : "新增客戶 / 預預約單"}>
+      <Modal isOpen={isPendingEditModalOpen} onClose={() => setIsPendingEditModalOpen(false)} title={selectedCustomer ? "修改待施工案件" : "新增客戶 / 預約單"}>
         <PendingEditForm customer={selectedCustomer} onSuggestId={generateCustomerId()} vehicleMaster={vehicleMaster} onSubmit={handleAddOrUpdateCustomer} onCancel={() => setIsPendingEditModalOpen(false)} />
       </Modal>
 
