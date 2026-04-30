@@ -1,76 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { initialCustomers, initialInventory } from './data/mockData';
 import { api } from './lib/api';
-import type { Customer, FilmInventory, User, InventoryLog, PurchaseRecord, FinanceRecord } from './types';
+
+
+import { CustomerCard } from './components/CustomerCard';
+import type { Customer, StatusType, FilmInventory, User, InventoryLog } from './types';
+
+
+
 import { Modal } from './components/Modal';
-import { PendingEditForm } from './components/PendingEditForm';
-import { InquiryPage } from './components/InquiryPage';
+import { NewCustomerForm } from './components/NewCustomerForm';
+import { QuoteForm } from './components/QuoteForm';
 import { ConstructionForm } from './components/ConstructionForm';
 import { CompletedForm } from './components/CompletedForm';
-import { IntakeForm } from './components/IntakeForm';
+import { CustomerDetail } from './components/CustomerDetail';
 import { ArchivePage } from './components/ArchivePage';
 import { ConstructionMonitorPage } from './components/ConstructionMonitorPage';
+import { ScheduledForm } from './components/ScheduledForm';
 import { ExcelImport } from './components/ExcelImport';
-import { PendingExcelImport } from './components/PendingExcelImport';
 import { ArchiveEditForm } from './components/ArchiveEditForm';
-import { PendingListPage } from './components/PendingListPage';
 import { InventoryPage } from './components/InventoryPage';
 import { LoginPage } from './components/LoginPage';
-import { ActiveConstructionPage } from './components/ActiveConstructionPage';
-import { FinancePage } from './components/FinancePage';
-import { VehicleMasterImport } from './components/VehicleMasterImport';
-import { History, Box, LogOut, Clock, Hammer, UserPlus, Wallet, Save, Car, List, Menu, X } from 'lucide-react';
+import { History, LayoutDashboard, Plus, FileUp, Box, LogOut, User as UserIcon } from 'lucide-react';
+
+
+
+
+
+
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [inventory, setInventory] = useState<FilmInventory[]>([]);
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
-  const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
-  const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
-  const [settlements, setSettlements] = useState<any[]>([]);
-  const [view, setView] = useState<'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory' | 'finance'>('inquiry');
+  const [view, setView] = useState<'kanban' | 'archive' | 'monitor' | 'inventory'>('kanban');
   const [isLoading, setIsLoading] = useState(true);
-  const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
 
-  const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
-  const [isPendingEditModalOpen, setIsPendingEditModalOpen] = useState(false);
-  const [isConstructionModalOpen, setIsConstructionModalOpen] = useState(false);
-  const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isPendingImportModalOpen, setIsPendingImportModalOpen] = useState(false);
-  const [isArchiveEditModalOpen, setIsArchiveEditModalOpen] = useState(false);
-  const [isVehicleImportModalOpen, setIsVehicleImportModalOpen] = useState(false);
-  
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [vehicleMaster, setVehicleMaster] = useState<any[]>([]);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  // --- 雲端初始化 ---
   useEffect(() => {
     const initCloud = async () => {
+      // 增加超時保護：如果 5 秒內連不上雲端，強行進入離線模式
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('連線超時')), 5000));
+      
       try {
-        const [cloudCustomers, cloudInventory, cloudLogs, cloudPurchases, cloudFinance, cloudSettlements, cloudVehicleMaster] = await Promise.all([
+        const fetchTask = Promise.all([
           api.getCustomers(),
           api.getInventory(),
-          api.getInventoryLogs(),
-          api.getPurchaseRecords(),
-          api.getFinanceRecords(),
-          api.getFinanceSettlements(),
-          api.getVehicleMaster()
+          api.getInventoryLogs()
         ]);
+        
+        const [cloudCustomers, cloudInventory, cloudLogs] = await Promise.race([fetchTask, timeout]) as any;
         
         setCustomers(cloudCustomers || []);
         setInventory(cloudInventory || []);
         setInventoryLogs(cloudLogs || []);
-        setPurchaseRecords(cloudPurchases || []);
-        setFinanceRecords(cloudFinance || []);
-        setSettlements(cloudSettlements || []);
-        setVehicleMaster(cloudVehicleMaster || []);
-      } catch (err: any) {
-        console.error('雲端初始化失敗:', err);
+      } catch (err) {
+        console.error('雲端連線失敗，目前為空狀態:', err);
+        setCustomers([]);
+        setInventory([]);
       } finally {
         setIsLoading(false);
       }
+
     };
 
     if (currentUser) {
@@ -78,22 +71,64 @@ function App() {
     }
   }, [currentUser]);
 
-  const refreshVehicleMaster = async () => {
-    const data = await api.getVehicleMaster();
-    setVehicleMaster(data || []);
+
+
+
+
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isConstructionModalOpen, setIsConstructionModalOpen] = useState(false);
+  const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
+  const [isScheduledModalOpen, setIsScheduledModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isArchiveEditModalOpen, setIsArchiveEditModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+
+
+
+  const getCustomersByStatus = (status: StatusType) => {
+    return customers.filter(c => c.status === status);
   };
 
-  const handleEditCustomer = (customer: Customer) => {
+  const handleCardClick = (customer: Customer) => {
     setSelectedCustomer(customer);
-    setIsPendingEditModalOpen(true);
+    
+    if (customer.status === 'new') {
+      setIsPreviewModalOpen(true);
+    } else if (customer.status === 'deposit') {
+      setIsQuoteModalOpen(true);
+    } else if (customer.status === 'scheduled') {
+      setIsScheduledModalOpen(true);
+    } else if (customer.status === 'construction') {
+      setIsConstructionModalOpen(true);
+    } else if (customer.status === 'completed') {
+      setIsCompletedModalOpen(true);
+    }
+
   };
 
   const generateCustomerId = () => {
-    const list = Array.isArray(customers) ? customers : [];
-    return `C-${String(list.length + 1).padStart(3, '0')}`;
+    return `C-${String(customers.length + 1).padStart(3, '0')}`;
   };
 
-  const handleAddOrUpdateCustomer = async (target: Customer) => {
+  const handleAddOrUpdateCustomer = async (customerData: Partial<Customer>, moveToDeposit?: boolean) => {
+    const updatedStatus = moveToDeposit ? 'deposit' : 'new';
+    let target: Customer;
+
+    if (selectedCustomer) {
+      target = { ...selectedCustomer, ...customerData, status: updatedStatus as StatusType };
+    } else {
+      target = {
+        ...customerData,
+        status: updatedStatus as StatusType,
+      } as Customer;
+    }
+
     try {
       await api.upsertCustomer(target);
       setCustomers(prev => {
@@ -103,9 +138,12 @@ function App() {
       });
     } catch (err) {
       console.error('儲存失敗:', err);
+      alert('資料同步失敗，請檢查網路連線');
     }
-    setIsPendingEditModalOpen(false);
-    setIsIntakeModalOpen(false);
+    
+    setIsNewModalOpen(false);
+    setIsEditModalOpen(false);
+    setIsPreviewModalOpen(false);
     setSelectedCustomer(null);
   };
 
@@ -116,213 +154,350 @@ function App() {
     } catch (err) {
       console.error('更新失敗:', err);
     }
+    setIsQuoteModalOpen(false);
     setIsConstructionModalOpen(false);
     setIsCompletedModalOpen(false);
+    setIsScheduledModalOpen(false);
     setSelectedCustomer(null);
   };
 
+
   const handleImport = async (newCustomers: Customer[]) => {
     setIsImportModalOpen(false);
-    setIsPendingImportModalOpen(false);
+    
+    // 過濾出尚未存在於本地狀態的資料
     const existingIds = new Set(customers.map(c => c.id));
     const filtered = newCustomers.filter(c => !existingIds.has(c.id));
-    if (filtered.length === 0) return;
+
+    if (filtered.length === 0) {
+      alert('沒有提取到任何新資料，或者編號皆已存在。');
+      return;
+    }
+
     try {
-      setImportProgress({ current: 0, total: filtered.length });
-      for (let i = 0; i < filtered.length; i++) {
-        await api.upsertCustomer(filtered[i]);
-        setImportProgress({ current: i + 1, total: filtered.length });
+      // 依序寫入至雲端資料庫 (使用 for...of 避免短時間發出上百個請求導致被阻擋)
+      for (const c of filtered) {
+        await api.upsertCustomer(c);
       }
+      
+      // 雲端確認寫入成功後，一併更新前端畫面
       setCustomers(prev => [...prev, ...filtered]);
-      setImportProgress(null);
+      alert(`✅ 成功匯入並同步 ${filtered.length} 筆資料至雲端資料庫！`);
+
     } catch (err) {
-      setImportProgress(null);
+      console.error('雲端同步失敗:', err);
+      alert('上傳雲端失敗，請檢查網路連線。您可能需要重新整理網頁再試一次。');
     }
   };
 
   const handleUpdateInventory = async (item: FilmInventory) => {
+    const log: InventoryLog = {
+      id: `LOG-${Date.now()}`,
+      itemId: item.id,
+      action: 'update',
+      details: `更新 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
+      timestamp: new Date().toLocaleString(),
+      operator: currentUser?.name || '未知'
+    };
+
     try {
-      await api.updateInventory(item);
+      await Promise.all([
+        api.updateInventory(item),
+        api.addInventoryLog(log)
+      ]);
       setInventory(prev => prev.map(i => i.id === item.id ? item : i));
-    } catch (err) {}
+      setInventoryLogs(prev => [log, ...prev]);
+    } catch (err) {
+      console.error('同步庫存失敗:', err);
+    }
   };
 
   const handleAddInventory = async (item: FilmInventory) => {
+    const log: InventoryLog = {
+      id: `LOG-${Date.now()}`,
+      itemId: item.id,
+      action: 'add',
+      details: `新增 ${item.brand} ${item.color} 於 ${item.location.zone}${item.location.section}-${item.location.slot}`,
+      timestamp: new Date().toLocaleString(),
+      operator: currentUser?.name || '未知'
+    };
+
     try {
-      await api.updateInventory(item);
+      await Promise.all([
+        api.updateInventory(item),
+        api.addInventoryLog(log)
+      ]);
       setInventory(prev => [...prev, item]);
-    } catch (err) {}
+      setInventoryLogs(prev => [log, ...prev]);
+    } catch (err) {
+      console.error('新增庫存失敗:', err);
+    }
   };
 
-  const handleRemoveInventory = async (id: string) => {
-    try {
-      await api.deleteInventory(id);
-      setInventory(prev => prev.filter(i => i.id !== id));
-    } catch (err) {}
+
+  const handleRemoveInventory = (id: string) => {
+    const item = inventory.find(i => i.id === id);
+    setInventory(prev => prev.filter(i => i.id !== id));
+    if (item) {
+      setInventoryLogs(prev => [{
+        id: `LOG-${Date.now()}`,
+        itemId: id,
+        action: 'remove',
+        details: `移除項目 ${item.brand} ${item.color} (${item.location.zone}${item.location.section}-${item.location.slot})`,
+        timestamp: new Date().toLocaleString(),
+        operator: currentUser?.name || '未知'
+      }, ...prev]);
+    }
   };
 
-  const handleAddPurchaseRecord = async (record: PurchaseRecord) => {
-    try {
-      await api.addPurchaseRecord(record);
-      setPurchaseRecords(prev => [record, ...prev]);
-    } catch (err) {}
-  };
-
-  const handleAddFinanceRecord = async (record: FinanceRecord) => {
-    try {
-      await api.addFinanceRecord(record);
-      setFinanceRecords(prev => [record, ...prev]);
-    } catch (err) {}
-  };
-
-  const handleDeleteFinanceRecord = async (id: string) => {
-    try {
-      await api.deleteFinanceRecord(id);
-      setFinanceRecords(prev => prev.filter(r => r.id !== id));
-    } catch (err) {}
-  };
-
-  const handleSettleBook = async (settlement: any, recordIds: string[]) => {
-    try {
-      await api.addFinanceSettlement(settlement);
-      if (recordIds.length > 0) await api.updateFinanceRecordsSettlement(recordIds, settlement.id);
-      setSettlements(prev => [settlement, ...prev]);
-      setFinanceRecords(prev => prev.map(r => recordIds.includes(r.id) ? { ...r, settlementId: settlement.id } : r));
-    } catch (err) {}
-  };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setView('inquiry');
+    setView('kanban');
   };
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const columns: { id: StatusType; title: string }[] = [
+
+    { id: 'new', title: '新增客人 (進件區)' },
+    { id: 'deposit', title: '等待收訂 (施工報價)' },
+    { id: 'scheduled', title: '已下定・未施工' },
+    { id: 'construction', title: '施工中 (進度檢核)' },
+    { id: 'completed', title: '施工完成 (結案關懷)' },
+  ];
+
+
 
   if (!currentUser) return <LoginPage onLogin={setCurrentUser} />;
   
   if (isLoading) return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
-      <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTopColor: 'var(--primary)', borderRadius: '50%' }}></div>
-      <p style={{ marginTop: '16px', color: '#222', fontWeight: '700' }}>好室多膜 雲端同步中...</p>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+      <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+      <p style={{ marginTop: '16px', color: '#64748b', fontWeight: 'bold' }}>雲端同步中...</p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  const navItems = [
-    { id: 'inquiry', name: '諮詢進件', icon: <UserPlus size={18} /> },
-    { id: 'pending', name: '施工排程', icon: <Clock size={18} /> },
-    { id: 'monitor', name: '施工監控', icon: <Hammer size={18} /> },
-    { id: 'archive', name: '完工檔案', icon: <History size={18} /> },
-    { id: 'inventory', name: '膜料庫存', icon: <Box size={18} /> },
-    { id: 'finance', name: '收支流水', icon: <Wallet size={18} /> },
-  ];
-
   return (
-    <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header className="app-header">
-        <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '900' }}>C</div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.5px' }}>好室多膜</h1>
-            <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '800' }}>V.613.3 PRO <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#10b981', borderRadius: '50%' }}></span></span>
+
+    <div className="app-container">
+      <header className="app-header glass-panel">
+        <div className="brand">
+          <div style={{ width: '30px', height: '30px', background: 'var(--primary-color)', borderRadius: '8px' }}></div>
+          <h1>CarShop CRM PRO</h1>
+        </div>
+        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
+          {view === 'kanban' && (
+            <>
+              <button 
+                className="btn btn-outline" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', borderColor: '#f59e0b', color: '#b45309' }} 
+                onClick={() => setView('monitor')}
+              >
+                <LayoutDashboard size={18} /> 施工進度監控
+              </button>
+              <button 
+                className="btn btn-outline" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }} 
+                onClick={() => setView('inventory')}
+              >
+                <Box size={18} /> 膜料庫存
+              </button>
+              <button 
+                className="btn btn-outline" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }} 
+                onClick={() => setView('archive')}
+              >
+                <History size={18} /> 完工檔案庫
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => { setSelectedCustomer(null); setIsNewModalOpen(true); }}
+              >
+                <Plus size={18} /> 新增客戶資料
+              </button>
+            </>
+          )}
+
+          {view === 'archive' && currentUser.role === 'admin' && (
+            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#059669', borderColor: '#10b981' }} onClick={() => setIsImportModalOpen(true)}>
+              <FileUp size={18} /> Excel 匯入
+            </button>
+          )}
+
+          <div style={{ marginLeft: '12px', borderLeft: '1px solid #e2e8f0', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{currentUser.name}</div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{currentUser.role === 'admin' ? '系統管理員' : '店內員工'}</div>
+            </div>
+            <button className="btn" onClick={handleLogout} style={{ background: '#f1f5f9', color: '#475569', padding: '8px' }}>
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
 
-        {!isMobile ? (
-          <nav style={{ display: 'flex', gap: '8px' }}>
-            {navItems.map(item => (
-              <button 
-                key={item.id} 
-                onClick={() => setView(item.id as any)}
-                className="btn"
-                style={{ 
-                  background: view === item.id ? '#f7f7f7' : 'transparent',
-                  color: view === item.id ? '#222' : '#717171',
-                  border: 'none',
-                  padding: '8px 16px'
-                }}
-              >
-                {item.icon} {item.name}
-              </button>
-            ))}
-          </nav>
-        ) : (
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{ background: 'none', border: 'none', padding: '8px' }}>
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        )}
 
-        {!isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: '800' }}>{currentUser.name}</div>
-              <div style={{ fontSize: '0.7rem', color: '#717171' }}>{currentUser.role.toUpperCase()}</div>
-            </div>
-            <button className="btn btn-outline" onClick={handleLogout} style={{ padding: '8px' }}><LogOut size={18} /></button>
-          </div>
-        )}
+
+
       </header>
 
-      {isMobile && isMenuOpen && (
-        <div style={{ position: 'fixed', top: '60px', left: 0, right: 0, bottom: 0, background: '#fff', zIndex: 1500, padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {navItems.map(item => (
-            <button 
-              key={item.id} 
-              onClick={() => { setView(item.id as any); setIsMenuOpen(false); }}
-              className="btn btn-outline"
-              style={{ justifyContent: 'flex-start', padding: '16px', fontSize: '1.1rem' }}
-            >
-              {item.icon} {item.name}
-            </button>
+      {view === 'kanban' ? (
+        <div className="board-container">
+          {columns.map(column => (
+            <div key={column.id} className="kanban-column glass-panel">
+              <div className="column-header">
+                <div className="column-title">
+                  {column.title}
+                  <span className="card-count">{getCustomersByStatus(column.id).length}</span>
+                </div>
+              </div>
+              <div className="column-body">
+                {getCustomersByStatus(column.id).map(customer => (
+                  <CustomerCard 
+                    key={customer.id} 
+                    customer={customer} 
+                    onClick={handleCardClick} 
+                  />
+                ))}
+              </div>
+            </div>
           ))}
-          <div style={{ marginTop: 'auto', borderTop: '1px solid #ebebeb', paddingTop: '20px' }}>
-             <div style={{ marginBottom: '16px', fontWeight: '800' }}>{currentUser.name} ({currentUser.role})</div>
-             <button className="btn btn-primary" onClick={handleLogout} style={{ width: '100%' }}>登出系統</button>
-          </div>
         </div>
+      ) : view === 'archive' ? (
+        <ArchivePage 
+          customers={customers} 
+          onBack={() => setView('kanban')} 
+          onUpdate={(c) => setCustomers(prev => prev.map(x => x.id === c.id ? c : x))}
+          onEdit={(c) => {
+            setSelectedCustomer(c);
+            setIsArchiveEditModalOpen(true);
+          }}
+          onViewDetail={(c) => { 
+            setSelectedCustomer(c); 
+            setIsPreviewModalOpen(true); 
+          }} 
+          userRole={currentUser.role}
+        />
+
+      ) : view === 'inventory' ? (
+        <InventoryPage 
+          inventory={inventory}
+          inventoryLogs={inventoryLogs}
+          userRole={currentUser.role}
+          onAddInventory={handleAddInventory}
+          onUpdateInventory={handleUpdateInventory}
+          onRemoveInventory={handleRemoveInventory}
+          onBack={() => setView('kanban')}
+        />
+
+      ) : (
+
+        <ConstructionMonitorPage 
+          customers={customers} 
+          onBack={() => setView('kanban')}
+          onEdit={(c) => {
+            setSelectedCustomer(c);
+            setIsConstructionModalOpen(true);
+          }}
+        />
+
+
       )}
 
-      <main style={{ flex: 1, padding: isMobile ? '20px 10px' : '32px 40px' }}>
-        {view === 'inquiry' && <InquiryPage customers={customers} onEditCustomer={handleEditCustomer} userRole={currentUser.role} onAddNew={() => setIsIntakeModalOpen(true)} />}
-        {view === 'pending' && <PendingListPage customers={customers} onEditCustomer={handleEditCustomer} onUpdateCustomer={handleGenericUpdate} userRole={currentUser.role} onImportClick={() => setIsPendingImportModalOpen(true)} onAddNew={() => { setSelectedCustomer(null); setIsPendingEditModalOpen(true); }} />}
-        {view === 'monitor' && <ActiveConstructionPage customers={customers} onEditCustomer={(c) => { setSelectedCustomer(c); setIsConstructionModalOpen(true); }} />}
-        {view === 'archive' && <ArchivePage customers={customers} onBack={() => setView('pending')} onUpdate={handleUpdateCustomer} onEdit={(c) => { setSelectedCustomer(c); setIsArchiveEditModalOpen(true); }} onViewDetail={() => {}} userRole={currentUser.role} onImportClick={() => setIsImportModalOpen(true)} />}
-        {view === 'inventory' && <InventoryPage inventory={inventory} inventoryLogs={inventoryLogs} purchaseRecords={purchaseRecords} userRole={currentUser.role} onAddInventory={handleAddInventory} onUpdateInventory={handleUpdateInventory} onRemoveInventory={handleRemoveInventory} onAddPurchaseRecord={handleAddPurchaseRecord} onBack={() => setView('pending')} />}
-        {view === 'finance' && <FinancePage records={financeRecords} settlements={settlements} onAddRecord={handleAddFinanceRecord} onDeleteRecord={handleDeleteFinanceRecord} onSettle={handleSettleBook} />}
-      </main>
 
-      <Modal isOpen={isIntakeModalOpen} onClose={() => setIsIntakeModalOpen(false)} title="新增客戶資料表單">
-        <IntakeForm onSuggestId={generateCustomerId()} vehicleMaster={vehicleMaster} onSubmit={handleAddOrUpdateCustomer} onCancel={() => setIsIntakeModalOpen(false)} />
+
+      {/* Preview Modal */}
+      <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title="客戶詳細資料摘要">
+        {selectedCustomer && (
+          <>
+            <CustomerDetail customer={selectedCustomer} />
+            <div className="form-actions" style={{ marginTop: '24px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
+              <button className="btn btn-outline" onClick={() => { setIsPreviewModalOpen(false); setIsEditModalOpen(true); }}>編輯資料</button>
+              <button className="btn btn-primary" onClick={() => handleAddOrUpdateCustomer(selectedCustomer, true)}>資料無誤，開始報價</button>
+            </div>
+          </>
+        )}
       </Modal>
 
-      <Modal isOpen={isPendingEditModalOpen} onClose={() => setIsPendingEditModalOpen(false)} title={selectedCustomer ? "修改待施工案件" : "新增客戶 / 預約單"}>
-        <PendingEditForm customer={selectedCustomer} onSuggestId={generateCustomerId()} vehicleMaster={vehicleMaster} onSubmit={handleAddOrUpdateCustomer} onCancel={() => setIsPendingEditModalOpen(false)} />
+      {/* New/Edit Form Modal */}
+      <Modal isOpen={isNewModalOpen || isEditModalOpen} onClose={() => { setIsNewModalOpen(false); setIsEditModalOpen(false); }} title={isEditModalOpen ? "編輯客戶資料" : "新增客戶資料表單"}>
+        <NewCustomerForm 
+          onSuggestId={generateCustomerId()} 
+          initialCustomer={selectedCustomer}
+          onSubmit={handleAddOrUpdateCustomer} 
+          onCancel={() => { setIsNewModalOpen(false); setIsEditModalOpen(false); }} 
+        />
+      </Modal>
+
+      <Modal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} title="施工報價與排程">
+        {selectedCustomer && (
+          <QuoteForm 
+            customer={selectedCustomer} 
+            onSubmit={handleGenericUpdate} 
+            onCancel={() => setIsQuoteModalOpen(false)} 
+          />
+        )}
       </Modal>
 
       <Modal isOpen={isConstructionModalOpen} onClose={() => setIsConstructionModalOpen(false)} title="施工檢核與照片上傳">
-        {selectedCustomer && <ConstructionForm customer={selectedCustomer} onSubmit={(c) => { handleGenericUpdate(c); setIsConstructionModalOpen(false); }} onSaveProgress={handleGenericUpdate} onCancel={() => setIsConstructionModalOpen(false)} />}
+        {selectedCustomer && (
+          <ConstructionForm 
+            customer={selectedCustomer} 
+            onSubmit={handleGenericUpdate} 
+            onCancel={() => setIsConstructionModalOpen(false)} 
+          />
+        )}
+      </Modal>
+
+      <Modal isOpen={isCompletedModalOpen} onClose={() => setIsCompletedModalOpen(false)} title="售後關懷與結案設定">
+        {selectedCustomer && (
+          <CompletedForm 
+            customer={selectedCustomer} 
+            onSubmit={handleGenericUpdate} 
+            onCancel={() => setIsCompletedModalOpen(false)} 
+          />
+        )}
+      </Modal>
+
+      <Modal isOpen={isScheduledModalOpen} onClose={() => setIsScheduledModalOpen(false)} title="已下定・排程確認">
+        {selectedCustomer && (
+          <ScheduledForm
+            customer={selectedCustomer}
+            onUpdate={(c) => {
+              setCustomers(prev => prev.map(x => x.id === c.id ? c : x));
+              setIsScheduledModalOpen(false);
+              setSelectedCustomer(null);
+            }}
+            onStartConstruction={handleGenericUpdate}
+            onCancel={() => setIsScheduledModalOpen(false)}
+          />
+        )}
       </Modal>
 
       <Modal isOpen={isArchiveEditModalOpen} onClose={() => setIsArchiveEditModalOpen(false)} title="微調完工存檔資料">
-        {selectedCustomer && <ArchiveEditForm customer={selectedCustomer} onSubmit={(c) => { handleGenericUpdate(c); setIsArchiveEditModalOpen(false); }} onCancel={() => setIsArchiveEditModalOpen(false)} userRole={currentUser.role} />}
+        {selectedCustomer && (
+          <ArchiveEditForm 
+            customer={selectedCustomer} 
+            onSubmit={(c) => {
+              handleGenericUpdate(c);
+              setIsArchiveEditModalOpen(false);
+            }} 
+            onCancel={() => setIsArchiveEditModalOpen(false)} 
+            userRole={currentUser.role}
+          />
+
+        )}
       </Modal>
 
       <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="完工資料 Excel 匯入">
-        <ExcelImport onImport={handleImport} onCancel={() => setIsImportModalOpen(false)} />
+
+        <ExcelImport 
+          onImport={handleImport} 
+          onCancel={() => setIsImportModalOpen(false)} 
+        />
       </Modal>
 
-      <Modal isOpen={isPendingImportModalOpen} onClose={() => setIsPendingImportModalOpen(false)} title="排程資料 Excel 匯入">
-        <PendingExcelImport onImport={handleImport} onCancel={() => setIsPendingImportModalOpen(false)} />
-      </Modal>
-
-      <Modal isOpen={isVehicleImportModalOpen} onClose={() => setIsVehicleImportModalOpen(false)} title="車型母檔匯入">
-        <VehicleMasterImport onCancel={() => setIsVehicleImportModalOpen(false)} onSuccess={() => { setIsVehicleImportModalOpen(false); refreshVehicleMaster(); }} />
-      </Modal>
     </div>
+
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Customer } from '../types';
-import { Calendar, Gift, Heart } from 'lucide-react';
+import { Calendar, CheckCircle, FileText, Gift, Heart, Send } from 'lucide-react';
 
 interface CompletedFormProps {
   customer: Customer;
@@ -113,11 +113,6 @@ export const CompletedForm: React.FC<CompletedFormProps> = ({ customer, onSubmit
             <input type="checkbox" name="followUp1Year" checked={!!formData.followUp1Year} onChange={handleChange} /> 1年關心 (回娘家活動推薦)
           </label>
         </div>
-      </div>
-
-      <div className="form-group col-span-12">
-        <label className="form-label" style={{ color: '#ef4444', fontWeight: 'bold' }}>結案後待處理事項 (補貼、配件未裝等)</label>
-        <textarea name="pendingItems" className="form-control" style={{ minHeight: '60px', borderColor: '#fca5a5' }} placeholder="若有漏掉或需要下次補做的請寫在這裡..." value={formData.pendingItems || ''} onChange={handleChange as any}></textarea>
       </div>
 
       <div className="form-actions col-span-12" style={{ marginTop: '24px' }}>

@@ -1,18 +1,15 @@
 import React from 'react';
 import type { Customer } from '../types';
-import { LayoutDashboard, Edit3, CheckCircle2, Car, Clock, Calendar } from 'lucide-react';
-import { generateChecklist } from '../lib/utils';
-
+import { LayoutDashboard, Edit3, CheckCircle2, Car, Clock } from 'lucide-react';
 
 
 interface ConstructionMonitorPageProps {
   customers: Customer[];
   onBack: () => void;
   onEdit: (customer: Customer) => void;
-  onUpdateProgress: (customer: Customer) => void;
 }
 
-export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = ({ customers, onBack, onEdit, onUpdateProgress }) => {
+export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = ({ customers, onBack, onEdit }) => {
   const activeConstructions = customers.filter(c => c.status === 'construction');
 
   const getProgress = (customer: Customer) => {
@@ -21,175 +18,124 @@ export const ConstructionMonitorPage: React.FC<ConstructionMonitorPageProps> = (
     return Math.round((checked / customer.constructionChecklist.length) * 100);
   };
 
-  const handleToggleCheck = (customer: Customer, itemName: string) => {
-    const currentChecklist = generateChecklist(customer);
-    const updatedChecklist = currentChecklist.map(item => 
-      item.name === itemName ? { ...item, checked: !item.checked } : item
-    );
-    onUpdateProgress({ ...customer, constructionChecklist: updatedChecklist as any });
-  };
 
   return (
-    <div style={{ padding: '0 24px 40px', margin: '0 auto', maxWidth: '1400px' }}>
+    <div style={{ padding: '24px', margin: '0 auto', maxWidth: '100%' }}>
       {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', paddingTop: '24px' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
           <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '6px', fontWeight: 'bold' }}>
             ← 返回看板
           </button>
-          <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800' }}>現場施工進度監控</h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '0.9rem' }}>管理現場正在施作的車輛進度 ({activeConstructions.length} 台)</p>
+          <h1 style={{ margin: 0, fontSize: '1.8rem' }}>施工進度即時監控</h1>
+          <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '0.9rem' }}>目前施工中共 {activeConstructions.length} 台</p>
+
+        </div>
+        <div style={{ background: '#f8fafc', padding: '10px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <LayoutDashboard color="var(--primary)" size={22} />
+          <div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>施工中</div>
+            <div style={{ fontWeight: '800', fontSize: '1.1rem' }}>{activeConstructions.length} <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Units</span></div>
+          </div>
         </div>
       </header>
 
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        {/* Table Header */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '150px 150px 1fr 200px 150px 80px',
-          padding: '18px 25px',
-          background: '#f8fafc',
-          borderBottom: '2px solid #e2e8f0',
-          fontWeight: 'bold',
-          color: '#475569',
-          fontSize: '0.85rem',
-          letterSpacing: '0.5px'
-        }}>
-          <div>車主 / 車牌</div>
-          <div>車型 / 型號</div>
-          <div>施工細目與即時進度 (可直接點擊確認)</div>
-          <div>整體進度概況</div>
-          <div>預計完工</div>
-          <div style={{ textAlign: 'center' }}>詳細</div>
-        </div>
+      <section>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', padding: '10px 16px', background: '#eff6ff', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
+          <Car size={18} /> 施工進行中 ({activeConstructions.length} 台)
+        </h2>
 
-        {/* Table Body */}
-        <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
-          {activeConstructions.length > 0 ? activeConstructions.map((customer, idx) => {
-            const currentChecklist = generateChecklist(customer);
-            const totalCount = currentChecklist.length;
-            const checkedCount = currentChecklist.filter(i => i.checked).length;
-            const progress = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
 
-            return (
-              <div 
-                key={customer.id} 
-                className="list-row"
-                style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '150px 150px 1fr 200px 150px 80px',
-                  alignItems: 'start',
-                  padding: '24px 25px',
-                  borderBottom: '1px solid #f1f5f9',
-                  fontSize: '0.9rem',
-                  background: idx % 2 === 0 ? '#fff' : '#fcfcfc',
-                  transition: 'background 0.2s'
-                }}
-              >
-                {/* 1. Owner & Plate */}
-                <div>
-                  <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem' }}>{customer.name || '未提供'}</div>
-                  <div style={{ fontSize: '1rem', color: 'var(--primary)', fontWeight: '800', margin: '4px 0' }}>{customer.plateNumber || '尚未掛牌'}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {customer.id}</div>
-                </div>
-                
-                {/* 2. Car */}
-                <div>
-                  <div style={{ fontWeight: '700', color: '#1e293b' }}>{customer.brand}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{customer.model}</div>
-                  {customer.vehicleSize && <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#f1f5f9', borderRadius: '4px', color: '#64748b', display: 'inline-block', marginTop: '4px' }}>{customer.vehicleSize}</span>}
-                  
-                  {customer.expectedStartDate && customer.expectedEndDate && (
-                    <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#8b5cf6', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Clock size={12} /> {customer.expectedStartDate.substring(5)} ~ {customer.expectedEndDate.substring(5)}
+        {activeConstructions.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
+            <Car size={40} style={{ marginBottom: '12px', opacity: 0.3 }} />
+            <p>目前沒有正在施工中的車輛</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto', paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '16px', minWidth: 'max-content', alignItems: 'flex-start' }}>
+              {activeConstructions.map(customer => {
+                const progress = getProgress(customer);
+                const checkedCount = customer.constructionChecklist?.filter(i => i.checked).length ?? 0;
+                const totalCount = customer.constructionChecklist?.length ?? 0;
+
+                return (
+                  <div key={customer.id} style={{ width: '280px', flexShrink: 0, background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
+                    {/* Top progress bar */}
+                    <div style={{ height: '5px', background: '#f1f5f9' }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : 'linear-gradient(90deg, #3b82f6, #60a5fa)', transition: 'width 0.6s ease' }} />
                     </div>
-                  )}
-                </div>
 
-                {/* 3. Detailed Progress Checklist */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                   {currentChecklist.map(step => (
-                     <div 
-                      key={step.id} 
-                      onClick={() => handleToggleCheck(customer, step.name)}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        padding: '6px 10px', 
-                        borderRadius: '8px', 
-                        background: step.checked ? '#ecfdf5' : '#f8fafc',
-                        border: `1px solid ${step.checked ? '#10b981' : '#e2e8f0'}`,
-                        cursor: 'pointer',
-                        transition: '0.2s',
-                        fontSize: '0.8rem'
-                      }}
-                     >
-                       {step.checked ? <CheckCircle2 size={14} color="#10b981" style={{ flexShrink: 0 }} /> : <div style={{ width: 14, height: 14, border: '1px solid #cbd5e1', borderRadius: '50%', flexShrink: 0 }} />}
-                       <span style={{ color: step.checked ? '#065f46' : '#64748b', textDecoration: step.checked ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: step.checked ? 'bold' : 'normal' }}>
-                         {step.name}
-                       </span>
-                     </div>
-                   ))}
-                   {currentChecklist.length === 0 && (
-                     <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>尚未有任何項目</div>
-                   )}
-                </div>
+                    {/* Card header */}
+                    <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                            <span style={{ background: '#0f172a', color: '#fff', padding: '1px 6px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 'bold' }}>{customer.id}</span>
+                            <span style={{ fontSize: '1.1rem', fontWeight: '800' }}>{customer.plateNumber}</span>
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{customer.brand} {customer.model}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>客人</div>
+                          <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>{customer.name}</div>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '6px 8px' }}>
+                          <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginBottom: '2px' }}>施工項目</div>
+                          <div style={{ fontWeight: '600', fontSize: '0.78rem', color: 'var(--primary)' }}>{customer.mainService}</div>
+                        </div>
+                        <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '6px 8px' }}>
+                          <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}><Clock size={9} />預計交車</div>
+                          <div style={{ fontWeight: '600', fontSize: '0.78rem' }}>{customer.expectedEndDate ?? '未設定'}</div>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginBottom: '4px' }}>
+                          <span style={{ color: '#64748b' }}>完成進度</span>
+                          <span style={{ fontWeight: 'bold', color: progress === 100 ? '#10b981' : '#3b82f6' }}>{checkedCount} / {totalCount} ({progress}%)</span>
+                        </div>
+                        <div style={{ height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : '#3b82f6', borderRadius: '2px' }} />
+                        </div>
+                      </div>
+                    </div>
 
-                {/* 4. Overall Progress Bar */}
-                <div style={{ paddingRight: '20px' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: '800', color: progress === 100 ? '#10b981' : 'var(--primary)' }}>{progress}% 已完成</span>
-                      <span style={{ color: '#94a3b8' }}>{checkedCount}/{totalCount}</span>
-                   </div>
-                   <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : 'var(--primary)', transition: 'width 0.4s ease' }} />
-                   </div>
-                   <div style={{ marginTop: '10px', fontSize: '0.7rem', color: '#64748b' }}>
-                      主項: {customer.mainService || '未指定'}
-                   </div>
+                    {/* Checklist items */}
+                    <div style={{ padding: '12px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {customer.constructionChecklist && customer.constructionChecklist.length > 0 ? (
+                        customer.constructionChecklist.map(item => (
+                          <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: '6px', background: item.checked ? '#f0fdf4' : '#fafafa', border: `1px solid ${item.checked ? '#dcfce7' : '#f1f5f9'}` }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: item.checked ? '#16a34a' : '#334155' }}>
+                              {item.checked
+                                ? <CheckCircle2 size={12} style={{ color: '#10b981', flexShrink: 0 }} />
+                                : <div style={{ width: '11px', height: '11px', borderRadius: '50%', border: '1.5px solid #cbd5e1', flexShrink: 0 }} />}
+                              <span style={{ textDecoration: item.checked ? 'line-through' : 'none', fontWeight: item.checked ? '400' : '600', lineHeight: 1.3 }}>{item.name}</span>
+                            </span>
+                            <span style={{ marginLeft: '6px', flexShrink: 0, padding: '1px 7px', borderRadius: '20px', fontSize: '0.6rem', fontWeight: 'bold', background: item.checked ? '#dcfce7' : '#fff1f2', color: item.checked ? '#166534' : '#e11d48' }}>
+                              {item.checked ? '完成' : '待辦'}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ color: '#94a3b8', fontSize: '0.8rem', textAlign: 'center', padding: '16px' }}>尚未建立施工清單</div>
+                      )}
+                    </div>
 
-                </div>
-
-                {/* 5. Expected Delivery */}
-                <div>
-                   <div style={{ fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                     <Clock size={14} color="#94a3b8" /> {customer.expectedEndDate || '-'}
-                   </div>
-                   <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                      {(() => {
-                        if (!customer.expectedEndDate) return '剩餘施工時間：未知';
-                        const end = new Date(customer.expectedEndDate);
-                        const nowArr = new Date().toISOString().split('T')[0];
-                        const diff = Math.floor((end.getTime() - new Date(nowArr).getTime()) / (1000 * 60 * 60 * 24));
-                        if (diff < 0) return <span style={{ color: '#ef4444', fontWeight: 'bold' }}>已逾期 {Math.abs(diff)} 天</span>;
-                        if (diff === 0) return <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>今日完工</span>;
-                        return `剩餘施工時間：${diff} 天`;
-                      })()}
-                   </div>
-                </div>
-
-                {/* 6. Action */}
-                <div style={{ textAlign: 'center' }}>
-                  <button 
-                    onClick={() => onEdit(customer)}
-                    style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = '#fff'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }}
-                  >
-                    <Edit3 size={18} />
-                  </button>
-                </div>
-              </div>
-            );
-          }) : (
-            <div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>
-              <Car size={48} style={{ opacity: 0.2, marginBottom: '15px' }} />
-              <p>目前的範圍內沒有正在施工的案件。</p>
+                    {/* Footer button */}
+                    <div style={{ padding: '12px 16px', borderTop: '1px solid #f1f5f9' }}>
+                      <button className="btn btn-primary" style={{ width: '100%', padding: '9px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 'bold' }} onClick={() => onEdit(customer)}>
+                        <Edit3 size={13} /> 進入檢核 / 修改
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

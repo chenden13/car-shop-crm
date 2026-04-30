@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, LogIn, ShieldCheck, Car, Loader2 } from 'lucide-react';
+import { User, Lock, LogIn, ShieldCheck, Car } from 'lucide-react';
 import type { User as UserType } from '../types';
 
 interface LoginPageProps {
@@ -17,13 +17,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setError('');
     setLoading(true);
 
+    // Simulated login delay
     setTimeout(() => {
       if (username === '1' && password === '1') {
         onLogin({ username: '1', role: 'admin', name: '店長管理者' });
       } else if (username === 'staff' && password === 'staff123') {
+
         onLogin({ username: 'staff', role: 'employee', name: '店內員工' });
       } else {
-        setError('帳號或密碼錯誤');
+        setError('帳號或密碼錯誤，請重新輸入');
         setLoading(false);
       }
     }, 800);
@@ -35,76 +37,107 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(circle at top right, #3b82f61a, transparent), radial-gradient(circle at bottom left, #6366f11a, transparent), #f8fafc',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
       padding: '20px'
     }}>
-      <div className="form-section indigo" style={{
+      {/* Decorative items */}
+      <div style={{ position: 'absolute', top: '10%', left: '10%', width: '300px', height: '300px', background: 'var(--primary-color)', opacity: 0.1, filter: 'blur(100px)', borderRadius: '50%' }}></div>
+      <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '300px', height: '300px', background: '#3b82f6', opacity: 0.1, filter: 'blur(100px)', borderRadius: '50%' }}></div>
+
+      <div className="glass-panel" style={{
         width: '100%',
-        maxWidth: '440px',
-        padding: '50px 40px',
-        margin: 0,
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.08)',
-        textAlign: 'center'
+        maxWidth: '420px',
+        padding: '48px 40px',
+        borderRadius: '24px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        position: 'relative',
+        zIndex: 1
       }}>
-        <div style={{ marginBottom: '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{ 
-            width: '72px', height: '72px', background: '#3b82f6', borderRadius: '20px', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            margin: '0 auto 24px', boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)'
+            width: '64px', 
+            height: '64px', 
+            background: 'var(--primary-color)', 
+            borderRadius: '16px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            margin: '0 auto 20px',
+            boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.5)'
           }}>
-            <Car color="white" size={36} />
+            <Car color="white" size={32} />
           </div>
-          <h1 style={{ color: '#1e293b', fontSize: '2rem', fontWeight: '900', letterSpacing: '-1px' }}>好室多膜 CRM</h1>
-          <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500' }}>內部營運與客戶管理系統</p>
+          <h1 style={{ color: 'white', fontSize: '1.75rem', fontWeight: '800', margin: '0 0 8px 0' }}>CarShop CRM</h1>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>店內管理系統 - 請登入以繼續工作</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="form-group">
-            <label className="form-label" style={{ fontWeight: '700', color: '#475569' }}>帳號</label>
+            <label className="form-label" style={{ color: '#cbd5e1' }}>使用者帳號</label>
             <div style={{ position: 'relative' }}>
-              <User size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
               <input 
-                type="text" className="form-control" 
-                style={{ paddingLeft: '48px', height: '54px' }}
-                placeholder="請輸入使用者名稱" value={username} onChange={(e) => setUsername(e.target.value)} required
+                type="text" 
+                className="form-control" 
+                style={{ paddingLeft: '40px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white' }}
+                placeholder="輸入帳號"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label" style={{ fontWeight: '700', color: '#475569' }}>密碼</label>
+            <label className="form-label" style={{ color: '#cbd5e1' }}>存取密碼</label>
             <div style={{ position: 'relative' }}>
-              <Lock size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
               <input 
-                type="password" className="form-control" 
-                style={{ paddingLeft: '48px', height: '54px' }}
-                placeholder="請輸入存取密碼" value={password} onChange={(e) => setPassword(e.target.value)} required
+                type="password" 
+                className="form-control" 
+                style={{ paddingLeft: '40px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white' }}
+                placeholder="輸入密碼"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
           </div>
 
           {error && (
-            <div style={{ background: '#fef2f2', color: '#ef4444', padding: '12px', borderRadius: '12px', fontSize: '0.85rem', textAlign: 'center', fontWeight: '700', border: '1px solid #fee2e2' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '12px', borderRadius: '12px', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
               {error}
             </div>
           )}
 
           <button 
-            type="submit" className="btn btn-primary" disabled={loading}
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={loading}
             style={{ 
-              height: '56px', borderRadius: '16px', 
-              fontSize: '1.1rem', fontWeight: '900', 
-              boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)',
-              marginTop: '10px'
+              marginTop: '10px', 
+              padding: '14px', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '10px',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              transition: 'all 0.2s'
             }}
           >
-            {loading ? <Loader2 className="spinner" size={24} /> : '登入系統'}
+            {loading ? '驗證中...' : (
+              <>
+                登入系統 <LogIn size={18} />
+              </>
+            )}
           </button>
         </form>
 
-        <div style={{ marginTop: '40px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-          <p style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <ShieldCheck size={16} /> 僅授權內部人員訪問 · V.613 PRO
+        <div style={{ marginTop: '32px', textAlign: 'center' }}>
+          <p style={{ color: '#475569', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <ShieldCheck size={14} /> 僅授權公司內部人員訪問
           </p>
         </div>
       </div>
