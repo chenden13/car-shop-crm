@@ -24,10 +24,13 @@ import { FinancePage } from './components/FinancePage';
 import { VehicleMasterImport } from './components/VehicleMasterImport';
 import { History, Box, LogOut, Clock, Hammer, UserPlus, Wallet, Save, Car } from 'lucide-react';
 
-
-
-
-
+import { useIsMobile } from './hooks/useIsMobile';
+import { MobileDashboard } from './components/mobile/MobileDashboard';
+import { MobileActiveConstruction } from './components/mobile/MobileActiveConstruction';
+import { MobilePendingList } from './components/mobile/MobilePendingList';
+import { MobileInquiryList } from './components/mobile/MobileInquiryList';
+import { MobileArchive } from './components/mobile/MobileArchive';
+import { MobileInventory, MobileFinance } from './components/mobile/MobileMisc';
 
 
 function App() {
@@ -38,7 +41,8 @@ function App() {
   const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
   const [settlements, setSettlements] = useState<any[]>([]);
-  const [view, setView] = useState<'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory' | 'finance'>('inquiry');
+  const isMobile = useIsMobile();
+  const [view, setView] = useState<'dashboard' | 'inquiry' | 'pending' | 'archive' | 'monitor' | 'inventory' | 'finance'>(isMobile ? 'dashboard' : 'pending');
   const [isLoading, setIsLoading] = useState(true);
   const [importProgress, setImportProgress] = useState<{current: number, total: number} | null>(null);
 
@@ -86,8 +90,9 @@ function App() {
 
     if (currentUser) {
       initCloud();
+      if (isMobile) setView('dashboard');
     }
-  }, [currentUser]);
+  }, [currentUser, isMobile]);
 
   const refreshVehicleMaster = async () => {
     const data = await api.getVehicleMaster();
@@ -340,6 +345,99 @@ function App() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
+
+  if (isMobile) {
+    return (
+      <div className="mobile-app-container">
+        {view === 'dashboard' ? (
+          <MobileDashboard 
+            user={currentUser} 
+            onNavigate={(v) => setView(v === 'intake' ? 'inquiry' : v)} 
+            onLogout={handleLogout}
+            stats={{
+              inquiry: customers.filter(c => c.status === 'new').length,
+              pending: customers.filter(c => ['deposit', 'scheduled'].includes(c.status)).length,
+              monitor: customers.filter(c => c.status === 'construction').length
+            }}
+          />
+        ) : view === 'monitor' ? (
+          <MobileActiveConstruction 
+            customers={customers} 
+            onEditCustomer={(c) => { setSelectedCustomer(c); setIsConstructionModalOpen(true); }}
+            onBack={() => setView('dashboard')}
+          />
+        ) : view === 'pending' ? (
+          <MobilePendingList 
+            customers={customers}
+            onEditCustomer={handleEditCustomer}
+            onBack={() => setView('dashboard')}
+          />
+        ) : view === 'inquiry' ? (
+          <MobileInquiryList 
+            customers={customers}
+            onEditCustomer={handleEditCustomer}
+            onAddNew={() => { setSelectedCustomer(null); setIsIntakeModalOpen(true); }}
+            onBack={() => setView('dashboard')}
+          />
+        ) : view === 'archive' ? (
+          <MobileArchive 
+            customers={customers}
+            onEdit={(c) => { setSelectedCustomer(c); setIsArchiveEditModalOpen(true); }}
+            onBack={() => setView('dashboard')}
+          />
+        ) : view === 'inventory' ? (
+          <MobileInventory onBack={() => setView('dashboard')} />
+        ) : view === 'finance' ? (
+          <MobileFinance onBack={() => setView('dashboard')} />
+        ) : null}
+
+        {/* Reuse Modals for both Mobile and Desktop */}
+        {isPendingEditModalOpen && (
+          <Modal isOpen={isPendingEditModalOpen} onClose={() => setIsPendingEditModalOpen(false)} title="編輯排程資料">
+            <PendingEditForm 
+              customer={selectedCustomer || undefined} 
+              onSuggestId={generateCustomerId()}
+              vehicleMaster={vehicleMaster}
+              onSubmit={handleAddOrUpdateCustomer} 
+              onCancel={() => setIsPendingEditModalOpen(false)} 
+            />
+          </Modal>
+        )}
+
+        {isIntakeModalOpen && (
+          <Modal isOpen={isIntakeModalOpen} onClose={() => setIsIntakeModalOpen(false)} title="新增諮詢進件">
+            <IntakeForm 
+              onSuggestId={generateCustomerId()}
+              vehicleMaster={vehicleMaster}
+              onSubmit={handleAddOrUpdateCustomer} 
+              onCancel={() => setIsIntakeModalOpen(false)} 
+            />
+          </Modal>
+        )}
+
+        {isConstructionModalOpen && selectedCustomer && (
+          <Modal isOpen={isConstructionModalOpen} onClose={() => setIsConstructionModalOpen(false)} title="施工進度更新">
+            <ConstructionForm 
+              customer={selectedCustomer} 
+              onUpdate={handleGenericUpdate} 
+              onCancel={() => setIsConstructionModalOpen(false)} 
+            />
+          </Modal>
+        )}
+
+        {isArchiveEditModalOpen && selectedCustomer && (
+          <Modal isOpen={isArchiveEditModalOpen} onClose={() => setIsArchiveEditModalOpen(false)} title="編輯完工檔案">
+            <ArchiveEditForm 
+              customer={selectedCustomer} 
+              vehicleMaster={vehicleMaster}
+              onUpdate={handleGenericUpdate} 
+              onCancel={() => setIsArchiveEditModalOpen(false)} 
+            />
+          </Modal>
+        )}
+      </div>
+    );
+  }
 
   return (
 
