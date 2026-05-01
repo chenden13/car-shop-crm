@@ -13,9 +13,9 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
   const constructionCustomers = customers.filter(c => 
     c.status === 'construction' &&
     (
-      c.name.includes(searchTerm) || 
-      c.plateNumber.includes(searchTerm) || 
-      c.phone.includes(searchTerm)
+      String(c.name || '').includes(searchTerm) || 
+      String(c.plateNumber || '').includes(searchTerm) || 
+      String(c.phone || '').includes(searchTerm)
     )
   );
 
