@@ -17,7 +17,7 @@ const TINT_PRICE_TABLE: Record<string, { m3: number; m3_sunroof: number; my: num
   "方案2: 前、天(透) 身(黑)": { m3: 30500, m3_sunroof: 34500, my: 28500, my_sunroof: 38500 },
   "XC MAX": { m3: 28500, m3_sunroof: 36500, my: 26500, my_sunroof: 34500 },
   "Smart": { m3: 34500, m3_sunroof: 42500, my: 32500, my_sunroof: 40500 },
-  "方案3: 前(Smart)身、天(XC)": { m3: 32500, m3_sunroof: 40500, my: 28500, my_sunroof: 36500 },
+  "方案3: 前(Smart)身、天(XC)": { m3: 28500, m3_sunroof: 36500, my: 26500, my_sunroof: 34500 },
   "Vega": { m3: 22500, m3_sunroof: 25500, my: 20500, my_sunroof: 26500 },
   "T4": { m3: 26500, m3_sunroof: 30500, my: 24500, my_sunroof: 31500 },
   "方案4: 前(T4)身、天(Vega)": { m3: 24500, m3_sunroof: 27500, my: 22500, my_sunroof: 28500 },
