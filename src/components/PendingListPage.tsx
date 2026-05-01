@@ -173,7 +173,7 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
               >
                 {/* 1. ID */}
                 <div style={{ fontWeight: '600', color: '#64748b', fontSize: '0.75rem' }}>
-                  {(String(customer.id).includes('無') || (String(customer.id).startsWith('c_') && String(customer.id).length > 10)) ? '-' : customer.id}
+                  {String(customer.id).includes('無編號') || (String(customer.id).startsWith('c_') && String(customer.id).length > 10) ? '—' : (customer.id || '—')}
                 </div>
                 
                 {/* 2. Owner */}

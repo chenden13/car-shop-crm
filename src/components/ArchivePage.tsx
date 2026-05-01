@@ -97,8 +97,16 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         const idA = String(a.id || '');
         const idB = String(b.id || '');
         
-        if (idA === '無編號' && idB !== '無編號') return 1;
-        if (idB === '無編號' && idA !== '無編號') return -1;
+        const isAutoA = idA.includes('無編號');
+        const isAutoB = idB.includes('無編號');
+
+        if (isAutoA && isAutoB) {
+          // Both are auto-generated, sort by their internal timestamp/index to preserve upload order
+          return sortOrder === 'asc' ? idA.localeCompare(idB) : idB.localeCompare(idA);
+        }
+        
+        if (isAutoA) return 1; // Put auto-generated at the end
+        if (isAutoB) return -1;
         
         const cmp = idA.localeCompare(idB, undefined, { numeric: true });
         return sortOrder === 'asc' ? cmp : -cmp;
@@ -232,9 +240,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
                   boxShadow: isExpanded ? '0 10px 25px -5px rgba(0,0,0,0.05)' : 'none'
                 }}
               >
-                {/* 1. 編號 */}
                 <div style={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.8rem' }}>
-                  {String(customer.id).startsWith('c_') && String(customer.id).length > 10 ? '-' : (customer.id || '—')}
+                  {String(customer.id).includes('無編號') || (String(customer.id).startsWith('c_') && String(customer.id).length > 10) ? '—' : (customer.id || '—')}
                 </div>
                 
                 {/* 2. 客戶資訊 */}
