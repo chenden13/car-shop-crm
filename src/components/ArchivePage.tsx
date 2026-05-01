@@ -111,16 +111,25 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         const cmp = idA.localeCompare(idB, undefined, { numeric: true });
         return sortOrder === 'asc' ? cmp : -cmp;
       } else {
-        const isDate = (d: string) => /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(d.trim());
-        let valA = String(a.expectedEndDate || a.deliveryDate || a.expectedStartDate || '').trim();
-        let valB = String(b.expectedEndDate || b.deliveryDate || b.expectedStartDate || '').trim();
-        
-        const hasA = isDate(valA);
-        const hasB = isDate(valB);
+        const normalizeDate = (d: string) => {
+          if (!d) return '';
+          // Handle 2026-2-5.6 or 2026-5-22.23 -> Take first part
+          const firstPart = d.split('.')[0].trim();
+          const parts = firstPart.split(/[-/]/);
+          if (parts.length < 3) return firstPart;
+          const y = parts[0];
+          const m = parts[1].padStart(2, '0');
+          const day = parts[2].padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
 
-        if (!hasA && hasB) return 1;
-        if (hasA && !hasB) return -1;
-        if (!hasA && !hasB) return 0;
+        // User wants default sort by "Retention Time" (expectedStartDate)
+        let valA = normalizeDate(a.expectedStartDate || a.expectedEndDate || a.deliveryDate || '');
+        let valB = normalizeDate(b.expectedStartDate || b.expectedEndDate || b.deliveryDate || '');
+        
+        if (!valA && valB) return 1;
+        if (valA && !valB) return -1;
+        if (!valA && !valB) return 0;
 
         const cmp = valA.localeCompare(valB);
         return sortOrder === 'asc' ? cmp : -cmp;
@@ -213,8 +222,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         <div>編號</div>
         <div>客戶資訊</div>
         <div>車輛資訊</div>
-        <div>1.原本預約</div>
-        <div>2.完工交車</div>
+        <div>留車時間</div>
+        <div>交車時間</div>
         <div>3.健檢提醒</div>
         <div>膜料品牌與備註項目</div>
         <div style={{ textAlign: 'right' }}>操作</div>

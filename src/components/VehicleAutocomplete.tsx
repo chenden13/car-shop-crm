@@ -8,14 +8,52 @@ interface VehicleAutocompleteProps {
   onSelect: (data: { brand: string; model: string; vehicleSize: string }) => void;
 }
 
+const BUILTIN_VEHICLES = [
+  { brand: 'Toyota', model: 'bZ4X', size: 'XL' },
+  { brand: 'Toyota', model: 'Corolla Cross', size: 'L' },
+  { brand: 'Toyota', model: 'RAV4', size: 'XL' },
+  { brand: 'Toyota', model: 'Land Cruiser', size: '2XL' },
+  { brand: 'Toyota', model: 'GR86', size: 'S' },
+  { brand: 'Toyota', model: '86', size: 'S' },
+  { brand: 'Honda', model: 'HR-V', size: 'L' },
+  { brand: 'Honda', model: 'CR-V', size: 'XL' },
+  { brand: 'Honda', model: 'Pilot / 大七人座', size: '2XL' },
+  { brand: 'Hyundai', model: 'i10', size: 'S' },
+  { brand: 'Hyundai', model: 'i20', size: 'S' },
+  { brand: 'Hyundai', model: 'Accent', size: 'M' },
+  { brand: 'Hyundai', model: 'Venue', size: 'M' },
+  { brand: 'Hyundai', model: 'Elantra (Avante)', size: 'M' },
+  { brand: 'Hyundai', model: 'i30', size: 'M' },
+  { brand: 'Hyundai', model: 'Veloster', size: 'M' },
+  { brand: 'Hyundai', model: 'Ioniq (油電)', size: 'M' },
+  { brand: 'Hyundai', model: 'Kona', size: 'M' },
+  { brand: 'Hyundai', model: 'Kona Electric', size: 'M' },
+  { brand: 'Hyundai', model: 'Tucson (舊款)', size: 'L' },
+  { brand: 'Hyundai', model: 'Tucson L (新款)', size: 'XL' },
+  { brand: 'Hyundai', model: 'Santa Fe', size: 'XL' },
+  { brand: 'Hyundai', model: 'Palisade', size: '2XL' },
+  { brand: 'Hyundai', model: 'Custin (庫斯汀)', size: 'XL' },
+  { brand: 'Hyundai', model: 'Staria', size: '2XL' },
+  { brand: 'Hyundai', model: 'Grand Starex / H1', size: '2XL' },
+  { brand: 'Hyundai', model: 'Ioniq 5', size: 'XL' },
+  { brand: 'Hyundai', model: 'Ioniq 6', size: 'L' },
+  { brand: 'Hyundai', model: 'Ioniq 7 (未來)', size: '2XL' },
+  { brand: 'Mazda', model: 'MX-5', size: 'XS' },
+  { brand: 'Subaru', model: 'BRZ', size: 'S' },
+  { brand: 'Porsche', model: 'Cayman', size: 'S' },
+];
+
 export const VehicleAutocomplete: React.FC<VehicleAutocompleteProps> = ({ 
   brand, model, vehicleSize, vehicleMaster, onSelect 
 }) => {
+  // 合併雲端母檔與內建清單
+  const fullMaster = [...vehicleMaster, ...BUILTIN_VEHICLES];
+
   // 品牌清單 (去重)
-  const brands = Array.from(new Set(vehicleMaster.map(v => v.brand))).sort();
+  const brands = Array.from(new Set(fullMaster.map(v => v.brand))).sort();
   
   // 根據目前輸入的品牌，過濾出對應的車型清單
-  const filteredModels = vehicleMaster.filter(v => v.brand === brand);
+  const filteredModels = fullMaster.filter(v => v.brand.toLowerCase() === brand.toLowerCase());
 
   const handleBrandChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

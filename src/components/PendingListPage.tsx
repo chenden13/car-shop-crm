@@ -39,13 +39,24 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
   };
 
   const sortedScheduled = [...scheduledCustomers].sort((a, b) => {
+    const normalizeDate = (d: string) => {
+      if (!d) return '';
+      const firstPart = d.split('.')[0].trim();
+      const parts = firstPart.split(/[-/]/);
+      if (parts.length < 3) return firstPart;
+      const y = parts[0];
+      const m = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
     // Better date fallback for "Construction Time"
     const getSortValue = (cust: Customer) => {
       if (sortKey === 'expectedEndDate') {
-        return cust.expectedEndDate || cust.expectedStartDate || cust.deliveryDate || '';
+        return normalizeDate(cust.expectedEndDate || cust.expectedStartDate || cust.deliveryDate || '');
       }
       if (sortKey === 'expectedStartDate') {
-        return cust.expectedStartDate || cust.expectedEndDate || '';
+        return normalizeDate(cust.expectedStartDate || cust.expectedEndDate || '');
       }
       return String(cust[sortKey] || '');
     };
