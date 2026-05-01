@@ -104,8 +104,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         return sortOrder === 'asc' ? cmp : -cmp;
       } else {
         const isDate = (d: string) => /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(d.trim());
-        let valA = String(a.expectedStartDate || '').trim();
-        let valB = String(b.expectedStartDate || '').trim();
+        let valA = String(a.expectedEndDate || a.deliveryDate || '').trim();
+        let valB = String(b.expectedEndDate || b.deliveryDate || '').trim();
         
         if (!isDate(valA)) valA = '0000-00-00';
         if (!isDate(valB)) valB = '0000-00-00';

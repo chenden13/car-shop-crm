@@ -18,7 +18,11 @@ export const MobileArchive: React.FC<MobileArchiveProps> = ({ customers, onEdit,
       String(c.plateNumber || '').includes(searchTerm) || 
       String(c.posId || '').includes(searchTerm)
     )
-  );
+  ).sort((a, b) => {
+    const dateA = a.expectedEndDate || a.deliveryDate || '0000-00-00';
+    const dateB = b.expectedEndDate || b.deliveryDate || '0000-00-00';
+    return dateB.localeCompare(dateA);
+  });
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '16px' }}>
@@ -60,6 +64,17 @@ export const MobileArchive: React.FC<MobileArchiveProps> = ({ customers, onEdit,
             </div>
             
             <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '12px' }}>{customer.name} • {customer.model}</div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px', borderTop: '1px dashed #f1f5f9', paddingTop: '12px' }}>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>施工時間</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#166534' }}>{customer.expectedEndDate || '-'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>膜料顏色</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#6366f1' }}>{customer.filmColor || '-'}</div>
+              </div>
+            </div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
               <div style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>

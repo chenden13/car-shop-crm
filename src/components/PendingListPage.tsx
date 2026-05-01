@@ -15,7 +15,7 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
   customers, onEditCustomer, onUpdateCustomer, userRole, onImportClick, onAddNew 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortKey, setSortKey] = useState<keyof Customer>('expectedStartDate');
+  const [sortKey, setSortKey] = useState<keyof Customer>('expectedEndDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
 

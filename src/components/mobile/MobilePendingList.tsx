@@ -18,7 +18,11 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
       String(c.plateNumber || '').includes(searchTerm) || 
       String(c.phone || '').includes(searchTerm)
     )
-  );
+  ).sort((a, b) => {
+    const dateA = a.expectedEndDate || '9999-99-99';
+    const dateB = b.expectedEndDate || '9999-99-99';
+    return dateA.localeCompare(dateB);
+  });
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '16px' }}>
@@ -69,12 +73,23 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px', borderTop: '1px dashed #f1f5f9', paddingTop: '12px' }}>
               <div>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>施工時間</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#166534' }}>{customer.expectedEndDate || '未定'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>膜料顏色</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--primary)' }}>{customer.filmColor || '未填'}</div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>預計進場</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#0369a1' }}>{customer.expectedStartDate || '未定'}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0369a1' }}>{customer.expectedStartDate || '未定'}</div>
               </div>
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>預計交車</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#be185d' }}>{customer.deliveryDate || '未定'}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#be185d' }}>{customer.deliveryDate || '未定'}</div>
               </div>
             </div>
 
