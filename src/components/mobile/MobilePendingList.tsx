@@ -19,9 +19,11 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
       String(c.phone || '').includes(searchTerm)
     )
   ).sort((a, b) => {
-    const dateA = a.expectedEndDate || '9999-99-99';
-    const dateB = b.expectedEndDate || '9999-99-99';
-    return dateA.localeCompare(dateB);
+    const valA = a.expectedEndDate || a.expectedStartDate || a.deliveryDate || '';
+    const valB = b.expectedEndDate || b.expectedStartDate || b.deliveryDate || '';
+    if (!valA && valB) return 1;
+    if (valA && !valB) return -1;
+    return valA.localeCompare(valB);
   });
 
   return (

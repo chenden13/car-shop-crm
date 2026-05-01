@@ -39,9 +39,25 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
   };
 
   const sortedScheduled = [...scheduledCustomers].sort((a, b) => {
-    const valA = String(a[sortKey] || (sortOrder === 'asc' ? '9999-99-99' : '0000-00-00'));
-    const valB = String(b[sortKey] || (sortOrder === 'asc' ? '9999-99-99' : '0000-00-00'));
-    
+    // Better date fallback for "Construction Time"
+    const getSortValue = (cust: Customer) => {
+      if (sortKey === 'expectedEndDate') {
+        return cust.expectedEndDate || cust.expectedStartDate || cust.deliveryDate || '';
+      }
+      if (sortKey === 'expectedStartDate') {
+        return cust.expectedStartDate || cust.expectedEndDate || '';
+      }
+      return String(cust[sortKey] || '');
+    };
+
+    let valA = getSortValue(a);
+    let valB = getSortValue(b);
+
+    // Handle empty values to always be at the bottom
+    if (!valA && valB) return 1;
+    if (valA && !valB) return -1;
+    if (!valA && !valB) return 0;
+
     // Numeric sort for ID if applicable
     if (sortKey === 'id') {
       const numA = parseInt(valA.replace(/\D/g, '')) || 0;

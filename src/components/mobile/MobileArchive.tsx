@@ -19,9 +19,11 @@ export const MobileArchive: React.FC<MobileArchiveProps> = ({ customers, onEdit,
       String(c.posId || '').includes(searchTerm)
     )
   ).sort((a, b) => {
-    const dateA = a.expectedEndDate || a.deliveryDate || '0000-00-00';
-    const dateB = b.expectedEndDate || b.deliveryDate || '0000-00-00';
-    return dateB.localeCompare(dateA);
+    const valA = a.expectedEndDate || a.deliveryDate || a.expectedStartDate || '';
+    const valB = b.expectedEndDate || b.deliveryDate || b.expectedStartDate || '';
+    if (!valA && valB) return 1;
+    if (valA && !valB) return -1;
+    return valB.localeCompare(valA);
   });
 
   return (
