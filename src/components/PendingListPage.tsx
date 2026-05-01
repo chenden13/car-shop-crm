@@ -22,9 +22,9 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
   const scheduledCustomers = customers.filter(c => 
     ['deposit', 'scheduled'].includes(c.status) &&
     (
-      c.name.includes(searchTerm) || 
-      c.plateNumber.includes(searchTerm) || 
-      c.phone.includes(searchTerm) ||
+      String(c.name || '').includes(searchTerm) || 
+      String(c.plateNumber || '').includes(searchTerm) || 
+      String(c.phone || '').includes(searchTerm) ||
       (c.id && String(c.id).includes(searchTerm))
     )
   );

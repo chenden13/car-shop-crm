@@ -15,10 +15,10 @@ export const InquiryPage: React.FC<InquiryPageProps> = ({ customers, onEditCusto
   const inquiries = customers.filter(c => 
     c.status === 'new' && 
     (
-      c.name.includes(searchTerm) || 
-      c.plateNumber.includes(searchTerm) || 
-      c.phone.includes(searchTerm) ||
-      (c.id && c.id.includes(searchTerm))
+      String(c.name || '').includes(searchTerm) || 
+      String(c.plateNumber || '').includes(searchTerm) || 
+      String(c.phone || '').includes(searchTerm) ||
+      (c.id && String(c.id).includes(searchTerm))
     )
   );
 
