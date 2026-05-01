@@ -351,6 +351,12 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({
     onSubmit(prepareSubmitData('scheduled'), false);
   };
 
+  const handleRevertToInquiry = () => {
+    const isConfirm = window.confirm('確定要將此案件「退回諮詢進件區」嗎？狀態將變回新案件，並從排程名單中移除。');
+    if (!isConfirm) return;
+    onSubmit(prepareSubmitData('new'), false);
+  };
+
   return (
     <form className="form-grid" style={{ maxHeight: '85vh', overflowY: 'auto', paddingRight: '12px' }} onSubmit={(e) => e.preventDefault()}>
       
@@ -1014,6 +1020,12 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({
         ) : (
           <button type="button" className="btn" onClick={handleSave} style={{ background: '#3b82f6', color: '#fff', fontSize: '0.95rem', fontWeight: 'bold', padding: '10px 24px' }} disabled={isUploading}>
             {isUploading ? <Loader2 className="spinner" size={18} /> : '儲存表單 (保持排程)'}
+          </button>
+        )}
+
+        {formData.status !== 'new' && (
+          <button type="button" className="btn" onClick={handleRevertToInquiry} style={{ background: '#64748b', color: '#fff', fontSize: '0.95rem', fontWeight: 'bold', padding: '10px 24px' }} disabled={isUploading}>
+            退回諮詢區
           </button>
         )}
 
