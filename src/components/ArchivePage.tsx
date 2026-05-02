@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 import type { Customer, Role } from '../types';
 
 import {
@@ -141,6 +142,34 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
 
   const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
+  const handleExportExcel = () => {
+    // 準備匯出資料
+    const exportData = filteredCustomers.map(c => ({
+      '編號': c.id,
+      '客戶姓名': c.name,
+      '電話': c.phone,
+      '車牌': c.plateNumber,
+      '品牌': c.brand,
+      '車型': c.model,
+      '留車日期': c.expectedStartDate,
+      '完工/交車日期': c.deliveryDate || c.expectedEndDate,
+      '膜料顏色': c.filmColor,
+      '主施工項目': c.mainService,
+      '膜料品牌': c.mainServiceBrand,
+      '施工金額': c.totalAmount,
+      '毛利': c.revenue,
+      '備註': c.notes
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "完工案件");
+    
+    // 檔名加上日期
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `CRM_完工資料匯出_${dateStr}.xlsx`);
+  };
+
   const toggle = (customer: Customer, field: keyof Customer) => {
     onUpdate({ ...customer, [field]: !customer[field] });
   };
@@ -161,9 +190,14 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {userRole === 'admin' && (
-            <button className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#059669', borderColor: '#10b981' }} onClick={onImportClick}>
-              <FileUp size={16} /> Excel 匯入
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#059669', borderColor: '#10b981' }} onClick={onImportClick}>
+                <FileUp size={16} /> Excel 匯入
+              </button>
+              <button className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#2563eb', borderColor: '#3b82f6' }} onClick={handleExportExcel}>
+                <FileText size={16} /> Excel 匯出
+              </button>
+            </div>
           )}
           <div style={{ position: 'relative', width: '300px' }}>
             <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
