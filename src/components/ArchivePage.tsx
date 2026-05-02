@@ -143,39 +143,101 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
   const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
   const handleExportExcel = () => {
-    // 準備匯出資料
-    const exportData = filteredCustomers.map(c => ({
-      '編號': c.id,
-      '客戶姓名': c.name,
-      '電話': c.phone,
-      '車牌': c.plateNumber,
-      '汽車品牌': c.brand || '',
-      '車型': c.model || '',
-      '留車日期': c.expectedStartDate || '',
-      '完工/交車日期': c.deliveryDate || c.expectedEndDate || '',
-      '主施工項目': c.mainService || '',
-      '膜料品牌': c.mainServiceBrand || '',
-      '膜料顏色': c.filmColor || '',
-      '隔熱紙': c.windowTint || '',
-      '電子後視鏡': c.digitalMirror || '',
-      '電動改裝': c.electricMod || '',
-      '加購配件': (c.customAccessories || []).map(a => a.name).filter(n => n).join(', '),
-      '贈送項目': (c.giftItems || []).filter(g => g).join(', '),
-      '施工金額': c.totalAmount || 0,
-      '毛利': c.revenue || 0,
-      '活動折扣': c.appliedDiscountName || '',
-      '折扣金額': c.discountAmount || 0,
-      '得知管道': c.fromChannel || '',
-      '備註': c.notes || ''
-    }));
+    const normalizeDate = (d: string) => {
+      if (!d) return '';
+      const firstPart = d.split('.')[0].trim();
+      const parts = firstPart.split(/[-/]/);
+      if (parts.length < 3) return firstPart;
+      const y = parts[0];
+      const m = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    // 1. 按照施工日期由「最早」到「最晚」排序
+    const sortedData = [...filteredCustomers].sort((a, b) => {
+      const valA = normalizeDate(a.expectedStartDate || a.expectedEndDate || a.deliveryDate || '');
+      const valB = normalizeDate(b.expectedStartDate || b.expectedEndDate || b.deliveryDate || '');
+      if (!valA) return 1;
+      if (!valB) return -1;
+      return valA.localeCompare(valB);
+    });
+
+    // 2. 準備匯出資料 (加入月份區隔概念)
+    const exportData: any[] = [];
+    let lastMonth = '';
+
+    sortedData.forEach(c => {
+      const date = normalizeDate(c.expectedStartDate || '');
+      const month = date ? date.substring(0, 7) : '未知月份';
+      
+      // 月份更換時加入空行作為區隔
+      if (lastMonth && month !== lastMonth) {
+        exportData.push({}); // 空行
+      }
+      lastMonth = month;
+
+      exportData.push({
+        '施工月份': month,
+        '編號': c.id,
+        '客戶姓名': c.name,
+        '電話': c.phone,
+        '車牌': c.plateNumber,
+        '汽車品牌': c.brand || '',
+        '車型': c.model || '',
+        '留車日期': c.expectedStartDate || '',
+        '完工/交車日期': c.deliveryDate || c.expectedEndDate || '',
+        '主施工項目': c.mainService || '',
+        '膜料品牌': c.mainServiceBrand || '',
+        '膜料顏色': c.filmColor || '',
+        '隔熱紙': c.windowTint || '',
+        '電子後視鏡': c.digitalMirror || '',
+        '電動改裝': c.electricMod || '',
+        '加購配件': (c.customAccessories || []).map(a => a.name).filter(n => n).join(', '),
+        '贈送項目': (c.giftItems || []).filter(g => g).join(', '),
+        '施工金額': c.totalAmount || 0,
+        '毛利': c.revenue || 0,
+        '活動折扣': c.appliedDiscountName || '',
+        '得知管道': c.fromChannel || '',
+        '備註': c.notes || ''
+      });
+    });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // 3. 設定欄位寬度 (避免重疊)
+    const wscols = [
+      {wch: 12}, // 月份
+      {wch: 8},  // 編號
+      {wch: 15}, // 姓名
+      {wch: 15}, // 電話
+      {wch: 12}, // 車牌
+      {wch: 12}, // 品牌
+      {wch: 15}, // 車型
+      {wch: 12}, // 留車
+      {wch: 12}, // 交車
+      {wch: 18}, // 項目
+      {wch: 18}, // 品牌
+      {wch: 18}, // 顏色
+      {wch: 18}, // 隔熱紙
+      {wch: 18}, // 後視鏡
+      {wch: 18}, // 改裝
+      {wch: 30}, // 配件
+      {wch: 30}, // 贈送
+      {wch: 12}, // 金額
+      {wch: 12}, // 毛利
+      {wch: 15}, // 折扣
+      {wch: 15}, // 管道
+      {wch: 40}, // 備註
+    ];
+    ws['!cols'] = wscols;
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "完工案件");
+    XLSX.utils.book_append_sheet(wb, ws, "完工紀錄");
     
     // 檔名加上日期
     const dateStr = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `CRM_完工資料匯出_${dateStr}.xlsx`);
+    XLSX.writeFile(wb, `CRM_完工資料匯出(依施工順序)_${dateStr}.xlsx`);
   };
 
   const toggle = (customer: Customer, field: keyof Customer) => {
