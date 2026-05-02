@@ -53,7 +53,9 @@ export const VehicleAutocomplete: React.FC<VehicleAutocompleteProps> = ({
   const brands = Array.from(new Set(fullMaster.map(v => v.brand))).sort();
   
   // 根據目前輸入的品牌，過濾出對應的車型清單
-  const filteredModels = fullMaster.filter(v => v.brand.toLowerCase() === brand.toLowerCase());
+  const filteredModels = fullMaster.filter(v => 
+    v.brand && brand && v.brand.toLowerCase() === brand.toLowerCase()
+  );
 
   const handleBrandChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
