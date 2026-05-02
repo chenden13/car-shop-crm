@@ -228,6 +228,10 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         '電動改裝': c.electricMod || '',
         '加購配件': (c.customAccessories || []).map(a => a.name).filter(n => n).join(', '),
         '贈送項目': (c.giftItems || []).join(', '),
+        '大禮包交付': c.giftGiven ? 'O' : 'X',
+        '表單發送': c.formSent ? 'O' : 'X',
+        '二週關心': c.followUp2Weeks ? 'O' : 'X',
+        '照片傳送': c.photosSent ? 'O' : 'X',
         '施工金額': c.totalAmount || 0,
         '毛利': c.revenue || 0,
         '活動折扣': c.appliedDiscountName || '',
@@ -257,6 +261,10 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       {wch: 18}, // 改裝
       {wch: 30}, // 配件
       {wch: 30}, // 贈送
+      {wch: 12}, // 大禮包
+      {wch: 10}, // 表單
+      {wch: 10}, // 關心
+      {wch: 10}, // 照片
       {wch: 12}, // 金額
       {wch: 12}, // 毛利
       {wch: 15}, // 折扣
