@@ -220,6 +220,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         '車型': model,
         '留車日期': c.expectedStartDate || '',
         '完工/交車日期': c.deliveryDate || c.expectedEndDate || '',
+        '交車時間': c.expectedDeliveryTime || '',
         '主施工項目': c.mainService || '',
         '膜料品牌': c.mainServiceBrand || '',
         '膜料顏色': c.filmColor || '',
@@ -251,8 +252,9 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       {wch: 12}, // 車牌
       {wch: 12}, // 品牌
       {wch: 15}, // 車型
-      {wch: 12}, // 留車
-      {wch: 12}, // 交車
+      {wch: 12}, // 留車日期
+      {wch: 12}, // 交車日期
+      {wch: 12}, // 交車時間
       {wch: 18}, // 項目
       {wch: 18}, // 品牌
       {wch: 18}, // 顏色
@@ -272,6 +274,9 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       {wch: 40}, // 備註
     ];
     ws['!cols'] = wscols;
+
+    // 4. 固定首行 (凍結視窗)
+    ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft', state: 'frozen' };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "完工紀錄");
