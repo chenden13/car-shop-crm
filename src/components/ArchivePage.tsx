@@ -171,6 +171,39 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       const date = normalizeDate(c.expectedStartDate || '');
       const month = date ? date.substring(0, 7) : '未知月份';
       
+      // 試著從 model 中萃取品牌 (如果 brand 是空的)
+      let brand = c.brand || '';
+      let model = c.model || '';
+      
+      if (!brand && model) {
+        const lowerModel = model.toLowerCase();
+        // 常見品牌自動修正
+        if (lowerModel.includes('tesla') || lowerModel.includes('model 3') || lowerModel.includes('model y') || lowerModel.includes('model x') || lowerModel.includes('model s')) {
+          brand = 'Tesla';
+          if (lowerModel.startsWith('tesla ')) model = model.substring(6);
+        } else if (lowerModel.includes('suzuki') || lowerModel.includes('jimmy')) {
+          brand = 'Suzuki';
+          if (lowerModel.startsWith('suzuki ')) model = model.substring(7);
+        } else if (lowerModel.includes('volkswagen') || lowerModel.includes('福斯')) {
+          brand = 'Volkswagen';
+          if (lowerModel.startsWith('volkswagen ')) model = model.substring(11);
+          if (lowerModel.startsWith('福斯 ')) model = model.substring(3);
+        } else if (lowerModel.includes('toyota') || lowerModel.includes('豐田')) {
+          brand = 'Toyota';
+        } else if (lowerModel.includes('porsche') || lowerModel.includes('保時捷')) {
+          brand = 'Porsche';
+        } else if (lowerModel.includes('bmw')) {
+          brand = 'BMW';
+        } else if (lowerModel.includes('benze') || lowerModel.includes('mercedes') || lowerModel.includes('賓士')) {
+          brand = 'Mercedes-Benz';
+        } else if (model.includes(' ')) {
+          // 如果有空格，嘗試切分第一個單字作為品牌
+          const parts = model.split(' ');
+          brand = parts[0];
+          model = parts.slice(1).join(' ');
+        }
+      }
+
       // 月份更換時加入空行作為區隔
       if (lastMonth && month !== lastMonth) {
         exportData.push({}); // 空行
@@ -183,8 +216,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         '客戶姓名': c.name,
         '電話': c.phone,
         '車牌': c.plateNumber,
-        '汽車品牌': c.brand || '',
-        '車型': c.model || '',
+        '汽車品牌': brand,
+        '車型': model,
         '留車日期': c.expectedStartDate || '',
         '完工/交車日期': c.deliveryDate || c.expectedEndDate || '',
         '主施工項目': c.mainService || '',
@@ -194,7 +227,7 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         '電子後視鏡': c.digitalMirror || '',
         '電動改裝': c.electricMod || '',
         '加購配件': (c.customAccessories || []).map(a => a.name).filter(n => n).join(', '),
-        '贈送項目': (c.giftItems || []).filter(g => g).join(', '),
+        '贈送項目': (c.giftItems || []).join(', '),
         '施工金額': c.totalAmount || 0,
         '毛利': c.revenue || 0,
         '活動折扣': c.appliedDiscountName || '',
