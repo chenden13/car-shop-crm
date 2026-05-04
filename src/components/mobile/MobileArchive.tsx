@@ -11,14 +11,32 @@ interface MobileArchiveProps {
 export const MobileArchive: React.FC<MobileArchiveProps> = ({ customers, onEdit, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const archiveCustomers = customers.filter(c => 
-    c.status === 'completed' &&
-    (
-      String(c.name || '').includes(searchTerm) || 
-      String(c.plateNumber || '').includes(searchTerm) || 
-      String(c.posId || '').includes(searchTerm)
-    )
-  ).sort((a, b) => {
+  const archiveCustomers = customers.filter(c => {
+    if (c.status !== 'completed') return false;
+
+    const name = String(c.name || '').toLowerCase();
+    const plate = String(c.plateNumber || '').toLowerCase();
+    const posId = String(c.posId || '').toLowerCase();
+    const model = String(c.model || '').toLowerCase();
+    const brand = String(c.brand || '').toLowerCase();
+    const mainService = String(c.mainService || '').toLowerCase();
+    const mainServiceBrand = String(c.mainServiceBrand || '').toLowerCase();
+    const film = String(c.filmColor || '').toLowerCase();
+    const materialCode = String(c.materialCode || '').toLowerCase();
+    const term = searchTerm.toLowerCase();
+
+    return (
+      name.includes(term) || 
+      plate.includes(term) || 
+      posId.includes(term) ||
+      model.includes(term) ||
+      brand.includes(term) ||
+      mainService.includes(term) ||
+      mainServiceBrand.includes(term) ||
+      film.includes(term) ||
+      materialCode.includes(term)
+    );
+  }).sort((a, b) => {
     const normalizeDate = (d: string) => {
       if (!d) return '';
       const firstPart = d.split('.')[0].trim();

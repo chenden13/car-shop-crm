@@ -11,14 +11,30 @@ interface MobilePendingListProps {
 export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers, onEditCustomer, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const pendingCustomers = customers.filter(c => 
-    ['deposit', 'scheduled'].includes(c.status) &&
-    (
-      String(c.name || '').includes(searchTerm) || 
-      String(c.plateNumber || '').includes(searchTerm) || 
-      String(c.phone || '').includes(searchTerm)
-    )
-  ).sort((a, b) => {
+  const pendingCustomers = customers.filter(c => {
+    if (!['deposit', 'scheduled'].includes(c.status)) return false;
+
+    const name = String(c.name || '').toLowerCase();
+    const plate = String(c.plateNumber || '').toLowerCase();
+    const phone = String(c.phone || '').toLowerCase();
+    const brand = String(c.brand || '').toLowerCase();
+    const model = String(c.model || '').toLowerCase();
+    const mainService = String(c.mainService || '').toLowerCase();
+    const mainServiceBrand = String(c.mainServiceBrand || '').toLowerCase();
+    const film = String(c.filmColor || '').toLowerCase();
+    const term = searchTerm.toLowerCase();
+
+    return (
+      name.includes(term) || 
+      plate.includes(term) || 
+      phone.includes(term) ||
+      brand.includes(term) ||
+      model.includes(term) ||
+      mainService.includes(term) ||
+      mainServiceBrand.includes(term) ||
+      film.includes(term)
+    );
+  }).sort((a, b) => {
     const valA = a.expectedEndDate || a.expectedStartDate || a.deliveryDate || '';
     const valB = b.expectedEndDate || b.expectedStartDate || b.deliveryDate || '';
     if (!valA && valB) return 1;
