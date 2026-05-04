@@ -80,6 +80,13 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
       const model = String(c.model || '').toLowerCase();
       const film = String(c.filmColor || '').toLowerCase();
       const brand = String(c.brand || '').toLowerCase();
+      const mainService = String(c.mainService || '').toLowerCase();
+      const mainServiceBrand = String(c.mainServiceBrand || '').toLowerCase();
+      const materialCode = String(c.materialCode || '').toLowerCase();
+      const windowTint = String(c.windowTint || '').toLowerCase();
+      const windowTintBrand = String(c.windowTintBrand || '').toLowerCase();
+      const digitalMirror = String(c.digitalMirror || '').toLowerCase();
+      const electricMod = String(c.electricMod || '').toLowerCase();
       const posId = String(c.posId || '').toLowerCase();
       const notes = String(c.notes || '').toLowerCase();
       const term = searchTerm.toLowerCase();
@@ -90,6 +97,13 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
              model.includes(term) || 
              film.includes(term) || 
              brand.includes(term) || 
+             mainService.includes(term) || 
+             mainServiceBrand.includes(term) || 
+             materialCode.includes(term) || 
+             windowTint.includes(term) || 
+             windowTintBrand.includes(term) || 
+             digitalMirror.includes(term) || 
+             electricMod.includes(term) || 
              posId.includes(term) || 
              notes.includes(term);
     })

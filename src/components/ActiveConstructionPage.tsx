@@ -10,14 +10,30 @@ interface ActiveConstructionPageProps {
 export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ customers, onEditCustomer }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const constructionCustomers = customers.filter(c => 
-    c.status === 'construction' &&
-    (
-      String(c.name || '').includes(searchTerm) || 
-      String(c.plateNumber || '').includes(searchTerm) || 
-      String(c.phone || '').includes(searchTerm)
-    )
-  );
+  const constructionCustomers = customers.filter(c => {
+    if (c.status !== 'construction') return false;
+
+    const name = String(c.name || '').toLowerCase();
+    const plate = String(c.plateNumber || '').toLowerCase();
+    const phone = String(c.phone || '').toLowerCase();
+    const model = String(c.model || '').toLowerCase();
+    const brand = String(c.brand || '').toLowerCase();
+    const mainService = String(c.mainService || '').toLowerCase();
+    const mainServiceBrand = String(c.mainServiceBrand || '').toLowerCase();
+    const film = String(c.filmColor || '').toLowerCase();
+    const term = searchTerm.toLowerCase();
+
+    return (
+      name.includes(term) || 
+      plate.includes(term) || 
+      phone.includes(term) ||
+      model.includes(term) ||
+      brand.includes(term) ||
+      mainService.includes(term) ||
+      mainServiceBrand.includes(term) ||
+      film.includes(term)
+    );
+  });
 
   // 排序：按預計交車日期排序
   const sorted = [...constructionCustomers].sort((a, b) => {
