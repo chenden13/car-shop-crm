@@ -175,7 +175,7 @@ export const ArchiveEditForm: React.FC<ArchiveEditFormProps> = ({ customer, onSu
       </div>
       <div className="form-group col-span-3">
         <label className="form-label">客戶編號</label>
-        <input type="text" name="id" className="form-control" value={formData.id} readOnly style={{ background: '#f8fafc' }} />
+        <input type="text" name="id" className="form-control" value={formData.id} onChange={handleChange} />
       </div>
       <div className="form-group col-span-3">
         <label className="form-label">車主姓名</label>
@@ -214,8 +214,12 @@ export const ArchiveEditForm: React.FC<ArchiveEditFormProps> = ({ customer, onSu
         <input type="date" name="expectedStartDate" className="form-control" value={formData.expectedStartDate || ''} onChange={handleChange} />
       </div>
       <div className="form-group col-span-3">
-        <label className="form-label">預計施工時間</label>
-        <input type="date" name="expectedEndDate" className="form-control" value={formData.expectedEndDate || ''} onChange={handleChange} />
+        <label className="form-label">預計施工時間 (範圍)</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <input type="date" name="constructionStartDate" className="form-control" value={formData.constructionStartDate || ''} onChange={handleChange} style={{ fontSize: '0.75rem', padding: '4px' }} />
+          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>~</span>
+          <input type="date" name="constructionEndDate" className="form-control" value={formData.constructionEndDate || ''} onChange={handleChange} style={{ fontSize: '0.75rem', padding: '4px' }} />
+        </div>
       </div>
       <div className="form-group col-span-3">
         <label className="form-label">預計交車時間</label>

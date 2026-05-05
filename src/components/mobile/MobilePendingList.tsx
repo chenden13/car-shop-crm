@@ -35,8 +35,8 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
       film.includes(term)
     );
   }).sort((a, b) => {
-    const valA = a.expectedEndDate || a.expectedStartDate || a.deliveryDate || '';
-    const valB = b.expectedEndDate || b.expectedStartDate || b.deliveryDate || '';
+    const valA = a.constructionStartDate || a.expectedEndDate || a.expectedStartDate || '';
+    const valB = b.constructionStartDate || b.expectedEndDate || b.expectedStartDate || '';
     if (!valA && valB) return 1;
     if (valA && !valB) return -1;
     return valA.localeCompare(valB);
@@ -92,7 +92,10 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px', borderTop: '1px dashed #f1f5f9', paddingTop: '12px' }}>
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>施工時間</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#166534' }}>{customer.expectedEndDate || '未定'}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#166534' }}>
+                  {customer.constructionStartDate || '未定'}
+                  {customer.constructionEndDate ? ` ~ ${customer.constructionEndDate.slice(5)}` : ''}
+                </div>
               </div>
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>膜料顏色</div>
@@ -107,7 +110,7 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
               </div>
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>預計交車</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#be185d' }}>{customer.deliveryDate || '未定'}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#be185d' }}>{customer.expectedEndDate || '未定'}</div>
               </div>
             </div>
 

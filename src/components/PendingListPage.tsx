@@ -15,7 +15,7 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
   customers, onEditCustomer, onUpdateCustomer, userRole, onImportClick, onAddNew 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortKey, setSortKey] = useState<keyof Customer>('expectedEndDate');
+  const [sortKey, setSortKey] = useState<keyof Customer>('constructionStartDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
 
@@ -69,13 +69,16 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
 
     // Better date fallback for "Construction Time"
     const getSortValue = (cust: Customer) => {
+      if (sortKey === 'constructionStartDate') {
+        return normalizeDate(cust.constructionStartDate || cust.expectedEndDate || cust.expectedStartDate || '');
+      }
       if (sortKey === 'expectedEndDate') {
-        return normalizeDate(cust.expectedEndDate || cust.expectedStartDate || cust.deliveryDate || '');
+        return normalizeDate(cust.expectedEndDate || cust.expectedStartDate || '');
       }
       if (sortKey === 'expectedStartDate') {
-        return normalizeDate(cust.expectedStartDate || cust.expectedEndDate || '');
+        return normalizeDate(cust.expectedStartDate || cust.constructionStartDate || '');
       }
-      return String(cust[sortKey] || '');
+      return String(cust[sortKey as keyof Customer] || '');
     };
 
     let valA = getSortValue(a);
@@ -120,8 +123,8 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
             {[
               { key: 'id', label: '編號', icon: Hash },
               { key: 'expectedStartDate', label: '留車時間', icon: Clock },
-              { key: 'expectedEndDate', label: '施工時間', icon: Calendar },
-              { key: 'deliveryDate', label: '交車時間', icon: CalendarCheck },
+              { key: 'constructionStartDate', label: '施工時間', icon: Calendar },
+              { key: 'expectedEndDate', label: '交車時間', icon: CalendarCheck },
             ].map(item => {
               const isActive = sortKey === item.key;
               return (
@@ -260,21 +263,30 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
                 </div>
 
                 {/* 6. Construction */}
-                <div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                    <input 
                     type="date" 
-                    value={customer.expectedEndDate || ''} 
-                    onChange={(e) => onUpdateCustomer({ ...customer, expectedEndDate: e.target.value })}
+                    value={customer.constructionStartDate || ''} 
+                    onChange={(e) => onUpdateCustomer({ ...customer, constructionStartDate: e.target.value })}
                     style={{ fontSize: '0.75rem', padding: '2px 4px', width: '105px', border: '1px solid #e2e8f0', borderRadius: '4px', fontWeight: '700', color: '#166534' }}
                   />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>至</span>
+                    <input 
+                      type="date" 
+                      value={customer.constructionEndDate || ''} 
+                      onChange={(e) => onUpdateCustomer({ ...customer, constructionEndDate: e.target.value })}
+                      style={{ fontSize: '0.75rem', padding: '2px 4px', width: '105px', border: '1px solid #e2e8f0', borderRadius: '4px', fontWeight: '700', color: '#166534' }}
+                    />
+                  </div>
                 </div>
                 
                 {/* 7. Delivery (交車) */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <input 
                     type="date" 
-                    value={customer.deliveryDate || ''} 
-                    onChange={(e) => onUpdateCustomer({ ...customer, deliveryDate: e.target.value })}
+                    value={customer.expectedEndDate || ''} 
+                    onChange={(e) => onUpdateCustomer({ ...customer, expectedEndDate: e.target.value })}
                     style={{ fontSize: '0.75rem', padding: '2px 4px', width: '105px', border: '1px solid #e2e8f0', borderRadius: '4px', fontWeight: '700', color: '#be185d' }}
                   />
                   {customer.expectedDeliveryTime && (

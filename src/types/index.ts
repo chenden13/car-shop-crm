@@ -55,6 +55,7 @@ export interface Customer {
   expectedStartDate?: string;    // 預計進場/留車日期
   constructionTime?: string;     // 預計進場時間/留車時間
   constructionStartDate?: string; // 預計施工日期
+  constructionEndDate?: string;   // 預計施工結束日期 (範圍)
   expectedEndDate?: string;      // 預計交車日期
   expectedDeliveryTime?: string; // 預計交車時間
   materialOrdered?: boolean;

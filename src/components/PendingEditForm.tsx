@@ -485,7 +485,7 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({
       
       <div className="form-group col-span-3">
         <label className="form-label">客戶編號*</label>
-        <input required type="text" name="id" className="form-control" value={formData.id || ''} onChange={handleChange} disabled={!!customer} />
+        <input required type="text" name="id" className="form-control" value={formData.id || ''} onChange={handleChange} />
       </div>
       <div className="form-group col-span-3">
         <label className="form-label">姓名*</label>
@@ -533,8 +533,12 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({
           </div>
 
           <div className="form-group col-span-6">
-            <label className="form-label" style={{ color: '#166534', fontWeight: 'bold' }}>2. 預計施工(開工)日期</label>
-            <input required type="date" name="constructionStartDate" className="form-control" value={formData.constructionStartDate || ''} onChange={handleChange} style={{ borderColor: '#22c55e' }} />
+            <label className="form-label" style={{ color: '#166534', fontWeight: 'bold' }}>2. 預計施工時間 (範圍)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input required type="date" name="constructionStartDate" className="form-control" value={formData.constructionStartDate || ''} onChange={handleChange} style={{ borderColor: '#22c55e' }} />
+              <span style={{ color: '#94a3b8' }}>至</span>
+              <input type="date" name="constructionEndDate" className="form-control" value={formData.constructionEndDate || ''} onChange={handleChange} style={{ borderColor: '#22c55e' }} />
+            </div>
           </div>
 
           <div className="form-group col-span-6">

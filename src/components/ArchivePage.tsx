@@ -138,9 +138,9 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
           return `${y}-${m}-${day}`;
         };
 
-        // User wants default sort by "Retention Time" (expectedStartDate)
-        let valA = normalizeDate(a.expectedStartDate || a.expectedEndDate || a.deliveryDate || '');
-        let valB = normalizeDate(b.expectedStartDate || b.expectedEndDate || b.deliveryDate || '');
+        // Default sort by "Construction Start Time"
+        let valA = normalizeDate(a.constructionStartDate || a.expectedStartDate || a.deliveryDate || '');
+        let valB = normalizeDate(b.constructionStartDate || b.expectedStartDate || b.deliveryDate || '');
         
         if (!valA && valB) return 1;
         if (valA && !valB) return -1;
@@ -386,9 +386,9 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         <div>編號</div>
         <div>客戶資訊</div>
         <div>車輛資訊</div>
-        <div>留車時間</div>
-        <div>交車時間</div>
-        <div>3.健檢提醒</div>
+        <div>1.留車進場</div>
+        <div>2.施工期間</div>
+        <div>3.交車完工</div>
         <div>膜料品牌與備註項目</div>
         <div style={{ textAlign: 'right' }}>操作</div>
       </div>
@@ -433,14 +433,17 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
                   <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{customer.brand} {customer.model}</div>
                 </div>
 
-                {/* 4. 原本預約日期 */}
+                {/* 4. 原本預約日期 (留車) */}
                 <div style={{ fontSize: '0.82rem', color: '#64748b' }}>{customer.expectedStartDate || '—'}</div>
+                
+                {/* 5. 施工期間 */}
+                <div style={{ fontSize: '0.82rem', color: '#166534', fontWeight: '700' }}>
+                  {customer.constructionStartDate || customer.expectedEndDate || '—'}
+                  {customer.constructionEndDate ? ` ~ ${customer.constructionEndDate.slice(5)}` : ''}
+                </div>
 
-                {/* 5. 實際完工日期 */}
+                {/* 6. 實際完工日期 */}
                 <div style={{ fontSize: '0.85rem', color: '#ec4899', fontWeight: '800' }}>{customer.deliveryDate || '—'}</div>
-
-                {/* 6. 健檢提醒日期 */}
-                <div style={{ fontSize: '0.82rem', color: '#3b82f6', fontWeight: '700' }}>{customer.checkupDate || '—'}</div>
 
                 {/* 7. 施工項目與備註 */}
                 <div style={{ paddingRight: '20px' }}>
