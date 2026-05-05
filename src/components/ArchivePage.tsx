@@ -138,9 +138,9 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
           return `${y}-${m}-${day}`;
         };
 
-        // Default sort by "Construction Start Time"
-        let valA = normalizeDate(a.constructionStartDate || a.expectedStartDate || a.deliveryDate || '');
-        let valB = normalizeDate(b.constructionStartDate || b.expectedStartDate || b.deliveryDate || '');
+        // Default sort by "Construction Start Time" (with fallback for old records)
+        let valA = normalizeDate(a.constructionStartDate || a.expectedEndDate || a.expectedStartDate || '');
+        let valB = normalizeDate(b.constructionStartDate || b.expectedEndDate || b.expectedStartDate || '');
         
         if (!valA && valB) return 1;
         if (valA && !valB) return -1;
@@ -233,7 +233,8 @@ export const ArchivePage: React.FC<ArchivePageProps> = ({
         '汽車品牌': brand,
         '車型': model,
         '留車日期': c.expectedStartDate || '',
-        '完工/交車日期': c.deliveryDate || c.expectedEndDate || '',
+        '施工日期': c.constructionStartDate || c.expectedEndDate || '',
+        '完工/交車日期': c.deliveryDate || (c.constructionStartDate ? c.expectedEndDate : ''),
         '交車時間': c.expectedDeliveryTime || '',
         '主施工項目': c.mainService || '',
         '膜料品牌': c.mainServiceBrand || '',

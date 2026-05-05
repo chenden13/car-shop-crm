@@ -167,13 +167,15 @@ export const ActiveConstructionPage: React.FC<ActiveConstructionPageProps> = ({ 
                   <div style={{ background: '#f0fdf4', padding: '6px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                     <div style={{ fontSize: '0.65rem', color: '#166534', fontWeight: 'bold' }}>2.施工期間</div>
                     <div style={{ fontSize: '0.8rem', color: '#064e3b', fontWeight: '800' }}>
-                      {customer.constructionStartDate?.slice(5) || '-'}
+                      {customer.constructionStartDate?.slice(5) || customer.expectedEndDate?.slice(5) || '-'}
                       {customer.constructionEndDate ? ` ~ ${customer.constructionEndDate.slice(5)}` : ''}
                     </div>
                   </div>
                   <div style={{ background: '#fdf2f8', padding: '6px', borderRadius: '8px', border: '1px solid #fbcfe8' }}>
                     <div style={{ fontSize: '0.65rem', color: '#be185d', fontWeight: 'bold' }}>3.預計交車</div>
-                    <div style={{ fontSize: '0.8rem', color: '#831843', fontWeight: '800' }}>{customer.expectedEndDate?.slice(5)}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#831843', fontWeight: '800' }}>
+                      {customer.constructionStartDate ? customer.expectedEndDate?.slice(5) : customer.deliveryDate?.slice(5) || '-'}
+                    </div>
                     <div style={{ fontSize: '0.7rem', color: '#be185d' }}>{customer.expectedDeliveryTime}</div>
                   </div>
                 </div>

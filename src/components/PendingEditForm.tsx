@@ -78,7 +78,17 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({
   customer, onSuggestId, vehicleMaster = [], onSubmit, onCancel 
 }) => {
   const [formData, setFormData] = useState<Partial<Customer>>(() => {
-    if (customer) return { ...customer, customAccessories: customer.customAccessories || [] };
+    if (customer) {
+      // Data Migration: If it's an old record (missing constructionStartDate), 
+      // move expectedEndDate to constructionStartDate and deliveryDate to expectedEndDate.
+      const hasNewFormat = !!customer.constructionStartDate;
+      return { 
+        ...customer, 
+        constructionStartDate: customer.constructionStartDate || customer.expectedEndDate || '',
+        expectedEndDate: hasNewFormat ? customer.expectedEndDate : (customer.deliveryDate || ''),
+        customAccessories: customer.customAccessories || [] 
+      };
+    }
     return { id: onSuggestId, status: 'scheduled', customAccessories: [] };
   });
   

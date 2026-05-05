@@ -93,7 +93,7 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>施工時間</div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#166534' }}>
-                  {customer.constructionStartDate || '未定'}
+                  {customer.constructionStartDate || customer.expectedEndDate || '未定'}
                   {customer.constructionEndDate ? ` ~ ${customer.constructionEndDate.slice(5)}` : ''}
                 </div>
               </div>
@@ -110,7 +110,9 @@ export const MobilePendingList: React.FC<MobilePendingListProps> = ({ customers,
               </div>
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>預計交車</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#be185d' }}>{customer.expectedEndDate || '未定'}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#be185d' }}>
+                  {customer.constructionStartDate ? (customer.expectedEndDate || '未定') : (customer.deliveryDate || '未定')}
+                </div>
               </div>
             </div>
 

@@ -266,7 +266,7 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                    <input 
                     type="date" 
-                    value={customer.constructionStartDate || ''} 
+                    value={customer.constructionStartDate || customer.expectedEndDate || ''} 
                     onChange={(e) => onUpdateCustomer({ ...customer, constructionStartDate: e.target.value })}
                     style={{ fontSize: '0.75rem', padding: '2px 4px', width: '105px', border: '1px solid #e2e8f0', borderRadius: '4px', fontWeight: '700', color: '#166534' }}
                   />
@@ -285,7 +285,7 @@ export const PendingListPage: React.FC<PendingListPageProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <input 
                     type="date" 
-                    value={customer.expectedEndDate || ''} 
+                    value={customer.constructionStartDate ? (customer.expectedEndDate || '') : (customer.deliveryDate || '')} 
                     onChange={(e) => onUpdateCustomer({ ...customer, expectedEndDate: e.target.value })}
                     style={{ fontSize: '0.75rem', padding: '2px 4px', width: '105px', border: '1px solid #e2e8f0', borderRadius: '4px', fontWeight: '700', color: '#be185d' }}
                   />

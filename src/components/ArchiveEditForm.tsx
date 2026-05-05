@@ -38,10 +38,17 @@ interface ArchiveEditFormProps {
 
 export const ArchiveEditForm: React.FC<ArchiveEditFormProps> = ({ customer, onSubmit, onCancel, userRole }) => {
 
-  const [formData, setFormData] = useState<Customer>({
-    ...customer,
-    customAccessories: customer.customAccessories || [],
-    giftItems: customer.giftItems || []
+  const [formData, setFormData] = useState<Customer>(() => {
+    // Data Migration: If it's an old record (missing constructionStartDate), 
+    // move expectedEndDate to constructionStartDate and deliveryDate to expectedEndDate.
+    const hasNewFormat = !!customer.constructionStartDate;
+    return {
+      ...customer,
+      constructionStartDate: customer.constructionStartDate || customer.expectedEndDate || '',
+      expectedEndDate: hasNewFormat ? customer.expectedEndDate : (customer.deliveryDate || ''),
+      customAccessories: customer.customAccessories || [],
+      giftItems: customer.giftItems || []
+    };
   });
 
   const [damagePhotos, setDamagePhotos] = useState<CategorizedPhoto[]>(customer.damagePhotos || []);
