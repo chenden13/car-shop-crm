@@ -79,6 +79,7 @@ export const triggerWebhook = async (action: 'upsert' | 'delete', customer: Cust
 
   const servicePart = (() => {
     const s = customer.mainService || '';
+    if (s.includes('改色犀牛皮')) return '改色犀牛皮';
     if (s.includes('改色')) return '改色';
     if (s.includes('迎風面')) return '迎風面';
     if (s.includes('犀牛皮')) return '犀牛皮';

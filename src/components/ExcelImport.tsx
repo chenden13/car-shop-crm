@@ -67,6 +67,7 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImport, onCancel }) 
           
           mainService: (() => {
             const val = String(row['施工項目'] || row['主施工項目'] || '');
+            if (val.includes('改色犀牛皮')) return '改色犀牛皮';
             if (val.includes('改色')) return '改色';
             if (val.includes('迎風面')) return '迎風面';
             if (val.includes('犀牛皮')) return '犀牛皮';

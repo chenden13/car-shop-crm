@@ -133,6 +133,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({ customer, onSubmit, onCanc
           <option value="">請選擇</option>
           <option value="改色">改色</option>
           <option value="犀牛皮">犀牛皮</option>
+          <option value="改色犀牛皮">改色犀牛皮</option>
           <option value="迎風面">迎風面</option>
           <option value="局部保護/改色">局部保護/改色</option>
           <option value="汽車美容">汽車美容</option>
@@ -142,7 +143,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({ customer, onSubmit, onCanc
 
       <div className="form-group col-span-4">
         <label className="form-label">品牌/項目</label>
-        {(formData.mainService === '汽車美容' || formData.mainService === '鍍膜') ? (
+        {(formData.mainService === '汽車美容' || formData.mainService === '鍍膜' || formData.mainService === '改色犀牛皮') ? (
           <input
             type="text"
             name="mainServiceBrand"

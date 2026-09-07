@@ -55,7 +55,16 @@ export const MobileCalendar: React.FC<MobileCalendarProps> = ({
     }
 
     const service = item.mainService || '';
-    if (service.includes('迎風面')) {
+    if (service.includes('改色犀牛皮')) {
+      return {
+        bg: '#f4d5ea',
+        lightBg: '#fcf3f8',
+        text: '#6b3558',
+        border: '#e7b6d7',
+        darkText: '#6b3558',
+        badge: '改色犀牛皮'
+      };
+    } else if (service.includes('迎風面')) {
       return {
         bg: '#d7e6f8', // Fresh light Sky Blue primary
         lightBg: '#f1f6fc', // Soft background

@@ -58,7 +58,16 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
     }
 
     const service = item.mainService || '';
-    if (service.includes('迎風面')) {
+    if (service.includes('改色犀牛皮')) {
+      return {
+        bg: '#fcf3f8', // Fresh light magenta/pink-purple
+        stayBorder: '#f8e4f1',
+        border: '#e7b6d7',
+        text: '#6b3558',
+        constructionBg: '#f4d5ea',
+        badge: '改色犀牛皮'
+      };
+    } else if (service.includes('迎風面')) {
       return {
         bg: '#f1f6fc', // Fresh light Sky Blue
         stayBorder: '#e2edf9',
