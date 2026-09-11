@@ -889,7 +889,7 @@ export const PendingEditForm: React.FC<PendingEditFormProps> = ({
             </div>
           )}
 
-          {formData.mainService === '局部保護/改色' && (
+          {(formData.mainService === '迎風面' || formData.mainService === '迎風面犀牛皮' || formData.mainService === '局部保護/改色') && (
             <div className="col-span-12" style={{ marginTop: '8px', background: '#fffbeb', padding: '16px', borderRadius: '12px', border: '1px solid #fde68a' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '16px', alignItems: 'end' }}>
                 <div className="col-span-6">
